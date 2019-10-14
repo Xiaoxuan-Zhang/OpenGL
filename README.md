@@ -1,2 +1,2 @@
 # OpenGL
-OpenGL projects
+OpenGL projects.
