@@ -8,11 +8,11 @@
 
 #include "light.hpp"
 
-Light::Light(int id, LightType type, glm::vec3 position, glm::vec3 color) {
+Light::Light(int id, LightType type, const glm::vec3& position, const glm::vec3& color) {
     this->addLight(id, type, position, color);
 }
 
-void Light::addLight(int id, LightType type, glm::vec3 position, glm::vec3 color) {
+void Light::addLight(int id, LightType type, const glm::vec3& position, const glm::vec3& color) {
     this->lightId = id;
     this->lightType = type;
     this->lightPos = position;

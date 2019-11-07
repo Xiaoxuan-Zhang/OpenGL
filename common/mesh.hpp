@@ -37,11 +37,13 @@ struct Texture {
 
 class Mesh {
 public:
+    Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures);
+    
     vector<Vertex> vertices;
     vector<unsigned int> indices;
     vector<Texture> textures;
     vector<Texture> textures_external;
-    Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures);
+    
     void Draw(Shader& shader);
     void BindExternalTextures(vector<Texture> textures);
     unsigned int VAO, VBO, EBO;

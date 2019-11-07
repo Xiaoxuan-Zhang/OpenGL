@@ -14,13 +14,13 @@ void Scene::screenSize(unsigned int width, unsigned height) {
 };
 
 void Scene::loadData() {
-    //shaders
-    this->shaders["Bloom"] = new Shader("shaders/BloomShader/Bloom.vs", "shaders/BloomShader/Bloom.fs");
-    this->shaders["Bloom_lights"] = new Shader("shaders/BloomShader/Bloom.vs", "shaders/BloomShader/Bloom_lights.fs");
-    this->shaders["Bloom_blur"] = new Shader("shaders/BloomShader/Bloom_blur.vs", "shaders/BloomShader/Bloom_blur.fs");
-    this->shaders["Bloom_final"] = new Shader("shaders/BloomShader/Bloom_final.vs", "shaders/BloomShader/Bloom_final.fs");
+    // build and compile shaders
+    this->shaders["bloom"] = new Shader("shaders/BloomShader/Bloom.vs", "shaders/BloomShader/Bloom.fs");
+    this->shaders["bloom_lights"] = new Shader("shaders/BloomShader/Bloom.vs", "shaders/BloomShader/Bloom_lights.fs");
+    this->shaders["bloom_blur"] = new Shader("shaders/BloomShader/Bloom_blur.vs", "shaders/BloomShader/Bloom_blur.fs");
+    this->shaders["bloom_final"] = new Shader("shaders/BloomShader/Bloom_final.vs", "shaders/BloomShader/Bloom_final.fs");
 
-    //textures
+     // load textures
     this->textures["wood"] = load_Texture("resources/wood.png", true); // note that we're loading the texture as an SRGB texture
     this->textures["container"] = load_Texture("resources/container2.png", true); // note that we're loading the texture as an SRGB texture
 
@@ -30,13 +30,10 @@ void Scene::loadData() {
     
 };
 
-void Scene::addLights() {
+void Scene::addLight(LightType type, const glm::vec3& pos, const glm::vec3& color) {
 //     lighting info
-    int lightId = 0;
-    this->lights.push_back(new Light(lightId++, POINT_LIGHT, glm::vec3(0.0f, 0.5f,  1.5f), glm::vec3(2.0f, 2.0f, 2.0f)));
-    this->lights.push_back(new Light(lightId++, POINT_LIGHT, glm::vec3(-4.0f, 0.5f, -3.0f), glm::vec3(1.5f, 0.0f, 0.0f)));
-    this->lights.push_back(new Light(lightId++, POINT_LIGHT, glm::vec3(3.0f, 0.5f,  1.0f), glm::vec3(0.0f, 0.0f, 1.5f)));
-    this->lights.push_back(new Light(lightId++, POINT_LIGHT, glm::vec3(-.8f,  2.4f, -1.0f), glm::vec3(0.0f, 1.5f, 0.0f)));
+    int lightId = this->lights.size() - 1;
+    this->lights.push_back(new Light(lightId, type, pos, color));
 };
 
 void Scene::configFrameBuffers() {

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <random>
 #include <chrono>
 #include <string>
 #include <GL/glew.h> //OpenGL Loading Library, must be loaded first. (other options: GLAD)
@@ -13,6 +14,7 @@
 #include <model.hpp>
 #include <light.hpp>
 #include <scene.hpp>
+#include <geometry.hpp>
 
 using namespace std;
 
@@ -24,20 +26,18 @@ void error_callback(int error, const char* description)
     fprintf(stderr, "Error: %s\n", description);
 }
 void processInput(GLFWwindow *window);
-void renderQuad();
-void renderCube();
 
 GLFWwindow* window; //window handler
 
 // settings
-const unsigned int SCR_WIDTH = 1280;
-const unsigned int SCR_HEIGHT = 720;
+const unsigned int SCR_WIDTH = 1440;
+const unsigned int SCR_HEIGHT = 900;
 bool bloom = true;
 bool bloomKeyPressed = false;
 float exposure = 1.0f;
 
 // camera
-Camera camera(glm::vec3(0.0f, 3.0f, 7.0f));
+Camera camera(glm::vec3(0.0f, 3.0f, 9.0f));
 float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
 bool firstMouse = true;
@@ -81,35 +81,45 @@ int main()
     glfwSetScrollCallback(window, scroll_callback);
     glfwSetErrorCallback(error_callback);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    
     // configure global opengl state
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
     
-//    New scene
     Scene newScene;
     newScene.screenSize(SCR_WIDTH, SCR_HEIGHT);
+    newScene.loadData();
     
-    // build and compile shaders
-    // -------------------------
-    Shader shader("shaders/BloomShader/Bloom.vs", "shaders/BloomShader/Bloom.fs");
-    Shader shaderLight("shaders/BloomShader/Bloom.vs", "shaders/BloomShader/Bloom_lights.fs");
-    Shader shaderBlur("shaders/BloomShader/Bloom_blur.vs", "shaders/BloomShader/Bloom_blur.fs");
-    Shader shaderBloomFinal("shaders/BloomShader/Bloom_final.vs", "shaders/BloomShader/Bloom_final.fs");
+    Model moon = *newScene.models["moon"];
+    Model rock= *newScene.models["rock"];
     
-    // load textures
-    // -------------
-    unsigned int woodTexture      = load_Texture("resources/wood.png", true); // note that we're loading the texture as an SRGB texture
-    unsigned int containerTexture = load_Texture("resources/container2.png", true); // note that we're loading the texture as an SRGB texture
+    newScene.addLight(POINT_LIGHT, glm::vec3(0.0f, 0.5f,  1.5f), glm::vec3(2.0f, 2.0f, 2.0f));
+    newScene.addLight(POINT_LIGHT, glm::vec3(-4.0f, 0.5f, -3.0f), glm::vec3(1.5f, 0.0f, 0.0f));
+    newScene.addLight(POINT_LIGHT, glm::vec3(3.0f, 0.5f,  1.0f), glm::vec3(0.0f, 0.0f, 1.5f));
+    newScene.addLight(POINT_LIGHT, glm::vec3(-.8f,  2.4f, -1.0f), glm::vec3(0.0f, 1.5f, 0.0f));
     
-    Model moon("resources/44-moon-photorealistic-2k/Moon 2K.obj");
-    Model rock("resources/rock/rock.obj");
+    Shader bloomShader = *newScene.shaders["bloom"];
+    Shader bloomLightShader = *newScene.shaders["bloom_lights"];
+    Shader blurShader = *newScene.shaders["bloom_blur"];
+    Shader finalShader = *newScene.shaders["bloom_final"];
+    
+    bloomShader.use();
+    bloomShader.setInt("diffuseTexture", 0);
+    blurShader.use();
+    blurShader.setInt("image", 0);
+    finalShader.use();
+    finalShader.setInt("scene", 0);
+    finalShader.setInt("bloomBlur", 1);
+    
+    Geometry *cube = new Cube();
+    Geometry *quad = new Quad();
     
     // configure (floating point) framebuffers
     // ---------------------------------------
     unsigned int hdrFBO;
     glGenFramebuffers(1, &hdrFBO);
     glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
-    // create 2 floating point color buffers (1 for normal rendering, other for brightness treshold values)
+    // create 2 floating point color buffers (one for normal rendering, the other for brightness treshold values)
     unsigned int colorBuffers[2];
     glGenTextures(2, colorBuffers);
     for (unsigned int i = 0; i < 2; i++)
@@ -123,6 +133,7 @@ int main()
         // attach texture to framebuffer
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, colorBuffers[i], 0);
     }
+
     // create and attach depth buffer (renderbuffer)
     unsigned int rboDepth;
     glGenRenderbuffers(1, &rboDepth);
@@ -157,25 +168,7 @@ int main()
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
             printf("Framebuffer not complete!");
     }
-    
-    // lighting info
-    vector<Light> lights;
-    int lightId = 0;
-    lights.push_back(Light(lightId++, POINT_LIGHT, glm::vec3(0.0f, 0.5f,  1.5f), glm::vec3(2.0f, 2.0f, 2.0f)));
-    lights.push_back(Light(lightId++, POINT_LIGHT, glm::vec3(-4.0f, 0.5f, -3.0f), glm::vec3(1.5f, 0.0f, 0.0f)));
-    lights.push_back(Light(lightId++, POINT_LIGHT, glm::vec3(3.0f, 0.5f,  1.0f), glm::vec3(0.0f, 0.0f, 1.5f)));
-    lights.push_back(Light(lightId++, POINT_LIGHT, glm::vec3(-.8f,  2.4f, -1.0f), glm::vec3(0.0f, 1.5f, 0.0f)));
-    
-    // shader configuration
-    // --------------------
-    shader.use();
-    shader.setInt("diffuseTexture", 0);
-    shaderBlur.use();
-    shaderBlur.setInt("image", 0);
-    shaderBloomFinal.use();
-    shaderBloomFinal.setInt("scene", 0);
-    shaderBloomFinal.setInt("bloomBlur", 1);
-    
+   
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
@@ -202,116 +195,115 @@ int main()
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
         glm::mat4 model;
-        shader.use();
-        shader.setMat4("projection", projection);
-        shader.setMat4("view", view);
+        bloomShader.use();
+        bloomShader.setMat4("projection", projection);
+        bloomShader.setMat4("view", view);
+        
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, woodTexture);
+        glBindTexture(GL_TEXTURE_2D, newScene.textures["wood"]);
         // set lighting uniforms
         char variableStr[64];
-        for (unsigned int i = 0; i < lights.size(); i++) {
+        for (unsigned int i = 0; i < newScene.lights.size(); i++) {
             sprintf(variableStr, "lights[%d].Position", i);
-            shader.setVec3(variableStr, lights[i].lightPos);
+            bloomShader.setVec3(variableStr, newScene.lights[i]->lightPos);
             sprintf(variableStr, "lights[%d].Color", i);
-            shader.setVec3(variableStr, lights[i].lightColor);
+            bloomShader.setVec3(variableStr, newScene.lights[i]->lightColor);
         }
-        shader.setVec3("viewPos", camera.Position);
+        bloomShader.setVec3("viewPos", camera.Position);
         // create one large cube that acts as the floor
         model = glm::mat4();
         model = glm::translate(model, glm::vec3(0.0f, -1.0f, 0.0));
         model = glm::scale(model, glm::vec3(12.5f, 0.5f, 12.5f));
-        shader.setMat4("model", model);
-        renderCube();
+        bloomShader.setMat4("model", model);
+        cube->draw();
+        
         // then create multiple cubes as the scenery
-        glBindTexture(GL_TEXTURE_2D, containerTexture);
         model = glm::mat4();
         model = glm::translate(model, glm::vec3(0.0f, 1.5f, 0.0));
         model = glm::scale(model, glm::vec3(0.2f));
-        shader.setMat4("model", model);
-        //renderCube();
-        rock.Draw(shader);
+        bloomShader.setMat4("model", model);
+        rock.Draw(bloomShader);
         
         model = glm::mat4();
         model = glm::translate(model, glm::vec3(2.0f, 0.0f, 1.0));
         model = glm::scale(model, glm::vec3(0.2f));
-        shader.setMat4("model", model);
-        //renderCube();
-        rock.Draw(shader);
+        bloomShader.setMat4("model", model);
+        rock.Draw(bloomShader);
         
         model = glm::mat4();
         model = glm::translate(model, glm::vec3(-1.0f, -1.0f, 2.0));
         model = glm::rotate(model, glm::radians(60.0f), glm::normalize(glm::vec3(1.0, 0.0, 1.0)));
-        shader.setMat4("model", model);
-        //renderCube();
-        rock.Draw(shader);
+        bloomShader.setMat4("model", model);
+        rock.Draw(bloomShader);
         
         model = glm::mat4();
         model = glm::translate(model, glm::vec3(0.0f, 2.7f, 4.0));
         model = glm::rotate(model, glm::radians(23.0f), glm::normalize(glm::vec3(1.0, 0.0, 1.0)));
         model = glm::scale(model, glm::vec3(0.2f));
-        shader.setMat4("model", model);
-        //renderCube();
-        rock.Draw(shader);
+        bloomShader.setMat4("model", model);
+        rock.Draw(bloomShader);
         
         model = glm::mat4();
         model = glm::translate(model, glm::vec3(-2.0f, 1.0f, -3.0));
         model = glm::rotate(model, glm::radians(124.0f), glm::normalize(glm::vec3(1.0, 0.0, 1.0)));
         model = glm::scale(model, glm::vec3(0.2f));
-        shader.setMat4("model", model);
-        //renderCube();
-        rock.Draw(shader);
+        bloomShader.setMat4("model", model);
+        rock.Draw(bloomShader);
         
         model = glm::mat4();
         model = glm::translate(model, glm::vec3(-3.0f, 0.0f, 0.0));
         model = glm::scale(model, glm::vec3(0.5f));
-        shader.setMat4("model", model);
-        //renderCube();
-        rock.Draw(shader);
+        bloomShader.setMat4("model", model);
+        rock.Draw(bloomShader);
+
+        // finally show all the light sources as bright balls
+        bloomLightShader.use();
+        bloomLightShader.setMat4("projection", projection);
+        bloomLightShader.setMat4("view", view);
         
-        // finally show all the light sources as bright cubes
-        shaderLight.use();
-        shaderLight.setMat4("projection", projection);
-        shaderLight.setMat4("view", view);
-        
-        for (int i = 0; i < lights.size(); i++) {
+        for (int i = 0; i < newScene.lights.size(); i++) {
             model = glm::mat4();
-            model = glm::translate(model, glm::vec3(lights[i].lightPos));
+            model = glm::translate(model, glm::vec3(newScene.lights[i]->lightPos));
             model = glm::scale(model, glm::vec3(0.1f));
-            shaderLight.setMat4("model", model);
-            shaderLight.setVec3("lightColor", lights[i].lightColor);
-            //renderCube();
-            moon.Draw(shaderLight);
+            bloomLightShader.setMat4("model", model);
+            bloomLightShader.setVec3("lightColor", newScene.lights[i]->lightColor);
+            moon.Draw(bloomLightShader);
         }
+        glBindTexture(GL_TEXTURE_2D, 0);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         
         // 2. blur bright fragments with two-pass Gaussian Blur
         // --------------------------------------------------
         bool horizontal = true, first_iteration = true;
         unsigned int amount = 10;
-        shaderBlur.use();
+        blurShader.use();
         for (unsigned int i = 0; i < amount; i++)
         {
             glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[horizontal]);
-            shaderBlur.setInt("horizontal", horizontal);
-            glBindTexture(GL_TEXTURE_2D, first_iteration ? colorBuffers[1] : pingpongColorbuffers[!horizontal]);  // bind texture of other framebuffer (or scene if first iteration)
-            renderQuad();
+            blurShader.setInt("horizontal", horizontal);
+            // bind texture of other framebuffer (or scene if first iteration)
+            glBindTexture(GL_TEXTURE_2D, first_iteration ? colorBuffers[1] : pingpongColorbuffers[!horizontal]);
+            quad->draw();
             horizontal = !horizontal;
             if (first_iteration)
                 first_iteration = false;
         }
+        glBindTexture(GL_TEXTURE_2D, 0);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         
         // 3. now render floating point color buffer to 2D quad and tonemap HDR colors to default framebuffer's (clamped) color range
         // --------------------------------------------------------------------------------------------------------------------------
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        shaderBloomFinal.use();
+        finalShader.use();
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, colorBuffers[0]);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, pingpongColorbuffers[!horizontal]);
-        shaderBloomFinal.setInt("bloom", bloom);
-        shaderBloomFinal.setFloat("exposure", exposure);
-        renderQuad();
+        finalShader.setInt("bloom", bloom);
+        finalShader.setFloat("exposure", exposure);
+        quad->draw();
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
         
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
@@ -321,112 +313,6 @@ int main()
     
     glfwTerminate();
     return 0;
-}
-
-// renderCube() renders a 1x1 3D cube in NDC.
-// -------------------------------------------------
-unsigned int cubeVAO = 0;
-unsigned int cubeVBO = 0;
-void renderCube()
-{
-    // initialize (if necessary)
-    if (cubeVAO == 0)
-    {
-        float vertices[] = {
-            // back face
-            -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // bottom-left
-            1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f, // top-right
-            1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 0.0f, // bottom-right
-            1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f, // top-right
-            -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // bottom-left
-            -1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 1.0f, // top-left
-            // front face
-            -1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f, // bottom-left
-            1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 0.0f, // bottom-right
-            1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f, // top-right
-            1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f, // top-right
-            -1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 1.0f, // top-left
-            -1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f, // bottom-left
-            // left face
-            -1.0f,  1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-right
-            -1.0f,  1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 1.0f, // top-left
-            -1.0f, -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-left
-            -1.0f, -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-left
-            -1.0f, -1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 0.0f, // bottom-right
-            -1.0f,  1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-right
-            // right face
-            1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-left
-            1.0f, -1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-right
-            1.0f,  1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 1.0f, // top-right
-            1.0f, -1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-right
-            1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-left
-            1.0f, -1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 0.0f, // bottom-left
-            // bottom face
-            -1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f, // top-right
-            1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 1.0f, // top-left
-            1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f, // bottom-left
-            1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f, // bottom-left
-            -1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 0.0f, // bottom-right
-            -1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f, // top-right
-            // top face
-            -1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 1.0f, // top-left
-            1.0f,  1.0f , 1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 0.0f, // bottom-right
-            1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 1.0f, // top-right
-            1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 0.0f, // bottom-right
-            -1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 1.0f, // top-left
-            -1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 0.0f  // bottom-left
-        };
-        glGenVertexArrays(1, &cubeVAO);
-        glGenBuffers(1, &cubeVBO);
-        // fill buffer
-        glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-        // link vertex attributes
-        glBindVertexArray(cubeVAO);
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-        glEnableVertexAttribArray(2);
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
-    }
-    // render Cube
-    glBindVertexArray(cubeVAO);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
-    glBindVertexArray(0);
-}
-
-// renderQuad() renders a 1x1 XY quad in NDC
-// -----------------------------------------
-unsigned int quadVAO = 0;
-unsigned int quadVBO;
-void renderQuad()
-{
-    if (quadVAO == 0)
-    {
-        float quadVertices[] = {
-            // positions        // texture Coords
-            -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
-            -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-            1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
-            1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-        };
-        // setup plane VAO
-        glGenVertexArrays(1, &quadVAO);
-        glGenBuffers(1, &quadVBO);
-        glBindVertexArray(quadVAO);
-        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-    }
-    glBindVertexArray(quadVAO);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    glBindVertexArray(0);
 }
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly

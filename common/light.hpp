@@ -26,13 +26,13 @@ enum LightType {
 
 class Light {
 public:
-    Light(int id, LightType type, glm::vec3 position, glm::vec3 color);
+    Light(int id, LightType type, const glm::vec3& position, const glm::vec3& color);
 
     int lightId;
     LightType lightType;
     glm::vec3 lightPos;
     glm::vec3 lightColor;
     
-    void addLight(int id, LightType type, glm::vec3 position, glm::vec3 color);
+    void addLight(int id, LightType type, const glm::vec3& position, const glm::vec3& color);
 };
 #endif /* light_hpp */

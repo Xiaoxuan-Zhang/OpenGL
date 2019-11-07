@@ -13,7 +13,7 @@
 #include <stdlib.h>
 #include <string>
 #include <vector>
-#include <map>
+#include <unordered_map>
 #include <glm/glm.hpp> //3D Math library
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -29,9 +29,9 @@ public:
     Scene() {};
     ~Scene() {};
     
-    map<string, Shader*> shaders;
-    map<string, unsigned int> textures;
-    map<string, Model*> models;
+    unordered_map<string, Shader*> shaders;
+    unordered_map<string, unsigned int> textures;
+    unordered_map<string, Model*> models;
     vector<Light*> lights;
     
     unsigned int screenWidth = 1280;
@@ -46,7 +46,7 @@ public:
     
     void screenSize(unsigned int width, unsigned height);
     void loadData();
-    void addLights();
+    void addLight(LightType type, const glm::vec3& pos, const glm::vec3& color);
     void render();
     void configFrameBuffers();
     

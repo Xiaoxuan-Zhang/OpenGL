@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3660F4132373A00A0003F2B4 /* geometry.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3660F4112373A00A0003F2B4 /* geometry.cpp */; };
 		6313F8922160518300068A87 /* mesh.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6313F8882160518300068A87 /* mesh.cpp */; };
 		6313F8932160518300068A87 /* model.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6313F88A2160518300068A87 /* model.cpp */; };
 		6313F8942160518300068A87 /* ImageLoader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6313F88B2160518300068A87 /* ImageLoader.cpp */; };
@@ -17,19 +18,9 @@
 		637FFD84234D40DA0050E256 /* light.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 637FFD82234D40DA0050E256 /* light.cpp */; };
 /* End PBXBuildFile section */
 
-/* Begin PBXCopyFilesBuildPhase section */
-		63BA265421602E2600BD7BE8 /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = /usr/share/man/man1/;
-			dstSubfolderSpec = 0;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 1;
-		};
-/* End PBXCopyFilesBuildPhase section */
-
 /* Begin PBXFileReference section */
+		3660F4112373A00A0003F2B4 /* geometry.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = geometry.cpp; path = common/geometry.cpp; sourceTree = SOURCE_ROOT; };
+		3660F4122373A00A0003F2B4 /* geometry.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = geometry.hpp; path = common/geometry.hpp; sourceTree = SOURCE_ROOT; };
 		6313F8862160518300068A87 /* ImageLoader.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = ImageLoader.hpp; path = common/ImageLoader.hpp; sourceTree = SOURCE_ROOT; };
 		6313F8872160518300068A87 /* camera.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = camera.hpp; path = common/camera.hpp; sourceTree = SOURCE_ROOT; };
 		6313F8882160518300068A87 /* mesh.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mesh.cpp; path = common/mesh.cpp; sourceTree = SOURCE_ROOT; };
@@ -78,6 +69,8 @@
 				637FFD80234D38BA0050E256 /* scene.hpp */,
 				637FFD82234D40DA0050E256 /* light.cpp */,
 				637FFD83234D40DA0050E256 /* light.hpp */,
+				3660F4112373A00A0003F2B4 /* geometry.cpp */,
+				3660F4122373A00A0003F2B4 /* geometry.hpp */,
 			);
 			name = commom;
 			path = openGL_app;
@@ -125,10 +118,9 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 63BA265D21602E2600BD7BE8 /* Build configuration list for PBXNativeTarget "openGL_app" */;
 			buildPhases = (
-				6313F89A216056EB00068A87 /* ShellScript */,
 				63BA265221602E2600BD7BE8 /* Sources */,
 				63BA265321602E2600BD7BE8 /* Frameworks */,
-				63BA265421602E2600BD7BE8 /* CopyFiles */,
+				360E1884237384A8006C276F /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -172,18 +164,22 @@
 /* End PBXProject section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		6313F89A216056EB00068A87 /* ShellScript */ = {
+		360E1884237384A8006C276F /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
+			inputFileListPaths = (
+			);
 			inputPaths = (
+			);
+			outputFileListPaths = (
 			);
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "rsync -auv $PROJECT_DIR/shaders/ $PROJECT_DIR/../bin/shaders\nrsync -auv $PROJECT_DIR/resources/ $PROJECT_DIR/../bin/resources\n";
+			shellScript = "rsync -av ${SRCROOT}/resources/. ${CONFIGURATION_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/resources/\nrsync -av ${SRCROOT}/shaders/. ${CONFIGURATION_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/shaders/\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -194,6 +190,7 @@
 			files = (
 				637FFD81234D38BA0050E256 /* scene.cpp in Sources */,
 				6313F8962160518300068A87 /* shaderProgram.cpp in Sources */,
+				3660F4132373A00A0003F2B4 /* geometry.cpp in Sources */,
 				637FFD84234D40DA0050E256 /* light.cpp in Sources */,
 				6313F898216052F800068A87 /* main.cpp in Sources */,
 				6313F8922160518300068A87 /* mesh.cpp in Sources */,
@@ -313,7 +310,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CONFIGURATION_BUILD_DIR = /Users/zooey/Downloads/3DGraphics/MyOpenGL/bin;
+				CONFIGURATION_BUILD_DIR = bin;
 				HEADER_SEARCH_PATHS = (
 					"./external/glew-1.13.0/include",
 					"./external/glfw-3.1.2/include",
@@ -348,7 +345,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CONFIGURATION_BUILD_DIR = /Users/zooey/Downloads/3DGraphics/MyOpenGL/bin;
+				CONFIGURATION_BUILD_DIR = bin;
 				PRELINK_LIBS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
