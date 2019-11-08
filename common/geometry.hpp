@@ -40,3 +40,8 @@ class Quad : public Geometry {
 public:
     Quad();
 };
+
+class Skybox : public Geometry {
+public:
+    Skybox();
+};

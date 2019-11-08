@@ -13,9 +13,11 @@ Mesh::Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture
     this->textures = textures;
     setupMesh();
 };
+
 void Mesh::BindExternalTextures(vector<Texture> textures) {
-    textures_external = textures;
+    externalTextures = textures;
 };
+
 void Mesh::Draw(Shader& shader) {
     // draw mesh
     shader.use();
@@ -23,7 +25,7 @@ void Mesh::Draw(Shader& shader) {
     unsigned int specMapN = 1;
     unsigned int reflectMapN = 1;
     unsigned int normapMapN = 1;
-    unsigned int tex_index = 0;
+    unsigned int texIndex = 0;
     for (unsigned int i = 0; i < textures.size(); i ++ ){
         // bind diffuse map
         glActiveTexture(GL_TEXTURE0 + i);
@@ -41,18 +43,20 @@ void Mesh::Draw(Shader& shader) {
         shader.setInt(("material." + name + number).c_str(), i);
         glBindTexture(GL_TEXTURE_2D, textures[i].id);
     }
-    tex_index = (unsigned int)textures.size();
-    for (unsigned int i = 0; i < textures_external.size(); i ++ ){
-        glActiveTexture(GL_TEXTURE0 + tex_index + i);
-        shader.setInt(textures_external[i].type.c_str(), tex_index+i);
-        if (textures_external[i].type == "cubemap") {
-            glBindTexture(GL_TEXTURE_CUBE_MAP, textures_external[i].id);
+    
+    texIndex = (unsigned int)textures.size();
+    for (unsigned int i = 0; i < externalTextures.size(); i ++ ){
+        glActiveTexture(GL_TEXTURE0 + texIndex + i);
+        shader.setInt(externalTextures[i].type.c_str(), texIndex + i);
+        if (externalTextures[i].type == "cubemap") {
+            glBindTexture(GL_TEXTURE_CUBE_MAP, externalTextures[i].id);
         } else {
-            glBindTexture(GL_TEXTURE_2D, textures_external[i].id);
+            glBindTexture(GL_TEXTURE_2D, externalTextures[i].id);
         }
     }
     
     shader.setFloat("material.shininess", 32.0f);
+    
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
     // always good practice to set everything back to defaults once configured.

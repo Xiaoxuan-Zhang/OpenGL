@@ -12,23 +12,24 @@ Model::Model(const char* path) {
     loadModel(path);
 };
 
-void Model::Draw(Shader& shader) {
+void Model::draw(Shader& shader) {
     for (unsigned int i = 0; i < meshes.size(); i ++) {
-        meshes[i].BindExternalTextures(textures_external);
+        meshes[i].BindExternalTextures(externalTextures);
         meshes[i].Draw(shader);
     };
 };
 
 void Model::BindTexture(GLenum target,GLuint texture) {
-    Texture ext_texture;
+    Texture extTexture;
     if (target == GL_TEXTURE_CUBE_MAP) {
-        ext_texture.type = "cubemap";
+        extTexture.type = "cubemap";
     } else {
-        ext_texture.type = "texture";
+        extTexture.type = "texture";
     }
-    ext_texture.id = texture;
-    textures_external.push_back(ext_texture);
+    extTexture.id = texture;
+    externalTextures.push_back(extTexture);
 };
+
 void Model::loadModel(const char* path) {
     Assimp::Importer import;
     string pathStr = path;
@@ -99,8 +100,8 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene) {
                                                             aiTextureType_SPECULAR, "texture_specular");
         textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
         
-        vector<Texture> reflectMaps = loadMaterialTextures(material, aiTextureType_REFLECTION, "texture_reflection");
-        textures.insert(reflectMaps.end(), reflectMaps.begin(), reflectMaps.end());
+        vector<Texture> reflectMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_reflection");
+        textures.insert(textures.end(), reflectMaps.begin(), reflectMaps.end());
         vector<Texture> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
         textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
     }
@@ -114,11 +115,11 @@ vector<Texture> Model::loadMaterialTextures(aiMaterial *mat, aiTextureType type,
         aiString str;
         mat->GetTexture(type, i, &str);
         bool skip = false;
-        for(unsigned int j = 0; j < textures_loaded.size(); j++)
+        for(unsigned int j = 0; j < loadedTextures.size(); j++)
         {
-            if(std::strcmp(textures_loaded[j].path.data(), str.C_Str()) == 0)
+            if(std::strcmp(loadedTextures[j].path.data(), str.C_Str()) == 0)
             {
-                textures.push_back(textures_loaded[j]);
+                textures.push_back(loadedTextures[j]);
                 skip = true;
                 break;
             }
@@ -131,7 +132,7 @@ vector<Texture> Model::loadMaterialTextures(aiMaterial *mat, aiTextureType type,
             texture.type = typeName;
             texture.path = str.C_Str();
             textures.push_back(texture);
-            textures_loaded.push_back(texture); // add to loaded textures
+            loadedTextures.push_back(texture); // add to loaded textures
         }
     }
     return textures;

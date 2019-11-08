@@ -22,18 +22,22 @@ class Model {
 public:
     Model(const char* path);
     void loadModel(const char* path);
-    void Draw(Shader& shader);
     void BindTexture(GLenum target,GLuint texture);
+    void draw(Shader& shader);
+    
     vector<Mesh> meshes;
-    vector<Texture> textures_loaded;
+    vector<Texture> loadedTextures;
+    
+    
 private:
     
-    vector<Texture> textures_external;
+    vector<Texture> externalTextures;
     string directory;
     void processNode(aiNode* node, const aiScene* scene);
     Mesh processMesh(aiMesh* mesh, const aiScene* scene);
     vector<Texture> loadMaterialTextures(aiMaterial* mat, aiTextureType type,
                                          string typeName);
+    
 };
 
 #endif /* model_hpp */

@@ -39,14 +39,14 @@ class Mesh {
 public:
     Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures);
     
+    unsigned int VAO, VBO, EBO;
     vector<Vertex> vertices;
     vector<unsigned int> indices;
     vector<Texture> textures;
-    vector<Texture> textures_external;
-    
+    vector<Texture> externalTextures;
     void Draw(Shader& shader);
     void BindExternalTextures(vector<Texture> textures);
-    unsigned int VAO, VBO, EBO;
+    
 private:
     
     void setupMesh();

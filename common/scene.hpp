@@ -10,6 +10,7 @@
 #define scene_hpp
 
 #include <stdio.h>
+#include <iostream>
 #include <stdlib.h>
 #include <string>
 #include <vector>
@@ -34,9 +35,11 @@ public:
     unordered_map<string, Model*> models;
     vector<Light*> lights;
     
+    
     unsigned int screenWidth = 1280;
     unsigned int screenHeight = 720;
     
+    unsigned int skyboxTexture;
     unsigned int hdrFBO;
     unsigned int colorBuffers[2];
     unsigned int rboDepth;
@@ -49,6 +52,7 @@ public:
     void addLight(LightType type, const glm::vec3& pos, const glm::vec3& color);
     void render();
     void configFrameBuffers();
+    void skybox();
     
 };
 #endif /* scene_hpp */

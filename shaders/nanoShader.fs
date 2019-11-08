@@ -22,23 +22,20 @@ in VS_OUT {
 
 void main()
 {
-  vec3 I = normalize(fs_in.Position - cameraPos);
-  //reflection
-  vec3 R_R = reflect(I, fs_in.Normal);
-  vec4 reflect = texture(cubemap, R_R);
+    //diffuse
+    vec4 diffuse = texture(material.texture_diffuse1, fs_in.TexCoords);
+    
+    vec3 I = normalize(fs_in.Position - cameraPos);
+    vec3 nor = normalize(fs_in.Normal);
+    
+    //reflection
+    vec3 R_R = reflect(I, nor);
+    vec4 reflCol = texture(cubemap, R_R);
 
-  //refraction
-  float ratio = 1.00 / 1.52;
-  vec3 R_F = refract(I, normalize(fs_in.Normal), ratio);
-  vec4 refract = texture(cubemap, R_F);
+    //reflection map
+    float reflect_intensity = texture(material.texture_reflection1, fs_in.TexCoords).r;
+    vec4 reflect_color;
+    reflect_color = reflCol * reflect_intensity;
 
-  //diffuse
-  vec4 diffuse =  texture(material.texture_diffuse1, fs_in.TexCoords);
-
-  //reflection map
-  float reflect_intensity = texture(material.texture_reflection1, fs_in.TexCoords).r;
-  vec4 reflect_color;
-  reflect_color = reflect * reflect_intensity;
-
-  FragColor = reflect_color + diffuse ;
+    FragColor = diffuse + reflect_color;
 }

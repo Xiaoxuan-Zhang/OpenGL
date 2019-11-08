@@ -15,18 +15,28 @@ void Scene::screenSize(unsigned int width, unsigned height) {
 
 void Scene::loadData() {
     // build and compile shaders
-    this->shaders["bloom"] = new Shader("shaders/BloomShader/Bloom.vs", "shaders/BloomShader/Bloom.fs");
-    this->shaders["bloom_lights"] = new Shader("shaders/BloomShader/Bloom.vs", "shaders/BloomShader/Bloom_lights.fs");
-    this->shaders["bloom_blur"] = new Shader("shaders/BloomShader/Bloom_blur.vs", "shaders/BloomShader/Bloom_blur.fs");
-    this->shaders["bloom_final"] = new Shader("shaders/BloomShader/Bloom_final.vs", "shaders/BloomShader/Bloom_final.fs");
-
+    this->shaders["skybox"] = new Shader("shaders/cubemap.vs", "shaders/cubemap.fs");
+    this->shaders["simple_texture"] = new Shader("shaders/simpleTexture.vs", "shaders/simpleTexture.fs");
+    this->shaders["envmap"] = new Shader("shaders/envmap.vs", "shaders/envmap.fs");
+    this->shaders["nano"] = new Shader("shaders/nanoShader.vs", "shaders/nanoShader.fs");
+    
+    
+    this->shaders["skybox"]->setInt("skybox", 0);
+    this->shaders["simple_texture"]->setInt("diffuseTexture", 0);
+    
      // load textures
     this->textures["wood"] = load_Texture("resources/wood.png", true); // note that we're loading the texture as an SRGB texture
     this->textures["container"] = load_Texture("resources/container2.png", true); // note that we're loading the texture as an SRGB texture
-
+    this->textures["brick_wall"] = load_Texture("resources/brickwall.jpg", true);
+    
     //models
     this->models["moon"] = new Model("resources/44-moon-photorealistic-2k/Moon 2K.obj");
     this->models["rock"] = new Model("resources/rock/rock.obj");
+    this->models["nanosuit"] = new Model("resources/nanosuit/nanosuit.obj");
+    
+    this->skybox();
+    
+    this->models["nanosuit"]->BindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
     
 };
 
@@ -85,4 +95,18 @@ void Scene::configFrameBuffers() {
             printf("Framebuffer not complete!");
     }
 };
+
+void Scene::skybox() {
+    vector<string> imagePaths;
+    imagePaths.push_back("resources/skybox/right.jpg");
+    imagePaths.push_back("resources/skybox/left.jpg");
+    imagePaths.push_back("resources/skybox/top.jpg");
+    imagePaths.push_back("resources/skybox/bottom.jpg");
+    imagePaths.push_back("resources/skybox/front.jpg");
+    imagePaths.push_back("resources/skybox/back.jpg");
+    
+    this->skyboxTexture = load_Cubemap(imagePaths);
+}
+
+
 
