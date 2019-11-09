@@ -42,12 +42,12 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "common/geometry.cpp"
-            timestampString = "594971513.947753"
+            timestampString = "594979836.7086951"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "122"
-            endingLineNumber = "122"
-            landmarkName = "Quad::Quad()"
+            startingLineNumber = "112"
+            endingLineNumber = "112"
+            landmarkName = "Skybox::Skybox()"
             landmarkType = "7">
             <Locations>
                <Location
@@ -105,13 +105,13 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "common/geometry.cpp"
-            timestampString = "594971513.9483989"
+            timestampString = "594979836.7087801"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "91"
-            endingLineNumber = "91"
-            landmarkName = "unknown"
-            landmarkType = "0">
+            startingLineNumber = "82"
+            endingLineNumber = "82"
+            landmarkName = "Quad::Quad()"
+            landmarkType = "7">
             <Locations>
                <Location
                   shouldBeEnabled = "No"
@@ -153,11 +153,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "common/geometry.cpp"
-            timestampString = "594971513.948707"
+            timestampString = "594979836.70885"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "93"
-            endingLineNumber = "93"
+            startingLineNumber = "84"
+            endingLineNumber = "84"
             landmarkName = "Quad::Quad()"
             landmarkType = "7">
          </BreakpointContent>
@@ -169,11 +169,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "common/world.h"
-            timestampString = "594971513.949019"
+            timestampString = "594979836.7089339"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "82"
-            endingLineNumber = "82"
+            startingLineNumber = "65"
+            endingLineNumber = "65"
             landmarkName = "renderScene(Scene* scene)"
             landmarkType = "9">
          </BreakpointContent>
@@ -185,7 +185,7 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "common/world.h"
-            timestampString = "594971513.951556"
+            timestampString = "594979836.709402"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "24"
@@ -201,12 +201,28 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "common/world.h"
-            timestampString = "594971513.9523669"
+            timestampString = "594979836.709758"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "34"
             endingLineNumber = "34"
             landmarkName = "defaultScene(int screenWdith, int screenHight, Camera *camera)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "common/world.h"
+            timestampString = "594979836.710173"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "118"
+            endingLineNumber = "118"
+            landmarkName = "renderScene(Scene* scene)"
             landmarkType = "9">
          </BreakpointContent>
       </BreakpointProxy>

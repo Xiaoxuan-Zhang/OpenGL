@@ -31,12 +31,9 @@ public:
     Geometry() {};
     virtual ~Geometry() {};
     
-    virtual void setTransformMatrix(glm::mat4 t);
-    virtual glm::mat4 getTransform();
     virtual void draw();
     
 protected:
-    glm::mat4 transformMatrix;
     int numOfVertices;
     vector<float> vertexData;
     unsigned int VAO;

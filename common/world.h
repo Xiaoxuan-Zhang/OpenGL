@@ -31,40 +31,23 @@ Scene* defaultScene(int screenWdith, int screenHight, Camera *camera) {
     newScene->textures["wood"] = load_Texture("resources/wood.png", true); // note that we're loading the texture as an SRGB texture
     newScene->textures["container"] = load_Texture("resources/container2.png", true); // note that we're loading the texture as an SRGB texture
     newScene->textures["brick_wall"] = load_Texture("resources/brickwall.jpg", true);
-    newScene->textures["pbr_albedo"] = load_Texture("resources/rustediron1/basecolor.png", true);
+    newScene->textures["pbr_albedo"] = load_Texture("resources/rustediron1/basecolor.png", false);
     newScene->textures["pbr_metallic"] = load_Texture("resources/rustediron1/metallic.png", false);
-    newScene->textures["pbc_roughness"] = load_Texture("resources/rustediron1/roughness.png", false);
+    newScene->textures["pbr_roughness"] = load_Texture("resources/rustediron1/roughness.png", false);
     newScene->textures["pbr_normal"] = load_Texture("resources/rustediron1/normal.png", false);
     
     // load models
     newScene->addModel("moon", "resources/44-moon-photorealistic-2k/Moon 2K.obj");
     newScene->addModel("rock", "resources/rock/rock.obj");
     newScene->addModel("nanosuit", "resources/nanosuit/nanosuit.obj");
+    newScene->addModel("sphere", "resources/sphere.obj");
     
     // assign cubemap for models
     newScene->models["nanosuit"]->BindTexture(GL_TEXTURE_CUBE_MAP, newScene->skyboxTexture);
     
     //add primitives
     Geometry* cube = newScene->addGeometry("cube0", CUBE);
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(2.0f, 9.0f, -3.0));
-    model = glm::scale(model, glm::vec3(2.0f, 2.0f, 2.0));
-    model = glm::rotate(model, glm::radians(45.0f), glm::vec3(0.0, 0.0, 1.0));
-    cube->setTransformMatrix(model);
-    
     Geometry* quad = newScene->addGeometry("quad0", QUAD);
-    model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(0.0, 0.0, 0.0));
-    model = glm::scale(model, glm::vec3(20.0f, 20.0f, 20.0));
-    model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0, 0.0, 0.0));
-    quad->setTransformMatrix(model);
-    
-    Geometry* sphere = newScene->addGeometry("cube1", CUBE);
-    model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(5.0, 12.0, 0.0));
-    model = glm::scale(model, glm::vec3(2.0f, 2.0f, 2.0));
-    sphere->setTransformMatrix(model);
-    
     newScene->addGeometry("skybox", SKYBOX);
     
     // add lights
@@ -101,7 +84,11 @@ void renderScene(Scene* scene) {
     scene->models["moon"]->draw(scene->shaders["simple_texture"]);
     
     scene->shaders["envmap"]->use();
-    scene->shaders["envmap"]->setMat4("model", scene->primitives["cube0"]->getTransform());
+    model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(2.0f, 9.0f, -3.0));
+    model = glm::scale(model, glm::vec3(2.0f, 2.0f, 2.0));
+    model = glm::rotate(model, glm::radians(45.0f), glm::vec3(0.0, 0.0, 1.0));
+    scene->shaders["envmap"]->setMat4("model", model);
     scene->shaders["envmap"]->setMat4("view", view);
     scene->shaders["envmap"]->setMat4("projection", projection);
     scene->shaders["envmap"]->setVec3("cameraPos", cam->Position);
@@ -110,7 +97,11 @@ void renderScene(Scene* scene) {
     scene->primitives["cube0"]->draw();
     
     scene->shaders["simple_texture"]->use();
-    scene->shaders["simple_texture"]->setMat4("model", scene->primitives["quad0"]->getTransform());
+    model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(0.0, 0.0, 0.0));
+    model = glm::scale(model, glm::vec3(20.0f, 20.0f, 20.0));
+    model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0, 0.0, 0.0));
+    scene->shaders["simple_texture"]->setMat4("model", model);
     scene->shaders["simple_texture"]->setMat4("view", view);
     scene->shaders["simple_texture"]->setMat4("projection", projection);
     glActiveTexture(GL_TEXTURE0);
@@ -118,10 +109,13 @@ void renderScene(Scene* scene) {
     scene->primitives["quad0"]->draw();
     
     scene->shaders["pbr"]->use();
-    scene->shaders["pbr"]->setMat4("model", scene->primitives["cube1"]->getTransform());
+    model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(3.0f, 10.0f, 0.0f));
+    model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    scene->shaders["pbr"]->setMat4("model", model);
     scene->shaders["pbr"]->setMat4("view", view);
     scene->shaders["pbr"]->setMat4("projection", projection);
-    scene->shaders["pbr"]->setVec3("camPosition", cam->Position);
+    scene->shaders["pbr"]->setVec3("cameraPos", cam->Position);
     scene->shaders["pbr"]->setInt("texture_diffuse", 0);
     scene->shaders["pbr"]->setInt("texture_normal", 1);
     scene->shaders["pbr"]->setInt("texture_metallic", 2);
@@ -135,7 +129,7 @@ void renderScene(Scene* scene) {
     glBindTexture(GL_TEXTURE_2D, scene->textures["pbr_metallic"]);
     glActiveTexture(GL_TEXTURE3);
     glBindTexture(GL_TEXTURE_2D, scene->textures["pbr_roughness"]);
-    scene->primitives["cube1"]->draw();
+    scene->models["sphere"]->draw(scene->shaders["pbr"]);
     
     //skybox
     glDepthFunc(GL_LEQUAL);

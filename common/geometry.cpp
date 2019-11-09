@@ -13,14 +13,6 @@ void Geometry::draw() {
     glBindVertexArray(0);
 }
 
-void Geometry::setTransformMatrix(glm::mat4 t) {
-    this->transformMatrix = t;
-}
-
-glm::mat4 Geometry::getTransform() {
-    return this->transformMatrix;
-}
-
 Cube::Cube() {
     this->vertexData = {
         // back face
@@ -86,7 +78,6 @@ Cube::Cube() {
     this->VAO = cubeVAO;
     this->VBO = cubeVBO;
     this->numOfVertices = 36;
-    this->transformMatrix = glm::mat4(1.0f);
 }
 
 Quad::Quad() {
@@ -118,7 +109,6 @@ Quad::Quad() {
     this->VAO = quadVAO;
     this->VBO = quadVBO;
     this->numOfVertices = 6;
-    this->transformMatrix = glm::mat4(1.0f);
 }
 
 Skybox::Skybox() {
@@ -181,7 +171,6 @@ Skybox::Skybox() {
     this->VAO = cubeVAO;
     this->VBO = cubeVBO;
     this->numOfVertices = 36;
-    this->transformMatrix = glm::mat4(1.0f);
 }
 
 Sphere::Sphere() {
@@ -275,8 +264,6 @@ Sphere::Sphere() {
     this->VAO = sphereVAO;
     this->VBO = sphereVBO;
     this->VEO = sphereVEO;
-
-    this->transformMatrix = glm::mat4(1.0f);
 }
 
 void Sphere::draw() {

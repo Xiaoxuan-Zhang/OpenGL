@@ -32,7 +32,7 @@ bool bloomKeyPressed = false;
 float exposure = 1.0f;
 
 // camera
-Camera camera(glm::vec3(0.0f, 12.0f, 12.0f));
+Camera camera(glm::vec3(0.0f, 15.0f, 12.0f));
 float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
 bool firstMouse = true;
