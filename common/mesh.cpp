@@ -18,9 +18,9 @@ void Mesh::BindExternalTextures(vector<Texture> textures) {
     externalTextures = textures;
 };
 
-void Mesh::Draw(Shader& shader) {
+void Mesh::Draw(Shader* shader) {
     // draw mesh
-    shader.use();
+    shader->use();
     unsigned int diffMapN = 1;
     unsigned int specMapN = 1;
     unsigned int reflectMapN = 1;
@@ -40,14 +40,14 @@ void Mesh::Draw(Shader& shader) {
         } else if (name == "texture_normal") {
             number = std::to_string(normapMapN++);
         }
-        shader.setInt(("material." + name + number).c_str(), i);
+        shader->setInt(("material." + name + number).c_str(), i);
         glBindTexture(GL_TEXTURE_2D, textures[i].id);
     }
     
     texIndex = (unsigned int)textures.size();
     for (unsigned int i = 0; i < externalTextures.size(); i ++ ){
         glActiveTexture(GL_TEXTURE0 + texIndex + i);
-        shader.setInt(externalTextures[i].type.c_str(), texIndex + i);
+        shader->setInt(externalTextures[i].type.c_str(), texIndex + i);
         if (externalTextures[i].type == "cubemap") {
             glBindTexture(GL_TEXTURE_CUBE_MAP, externalTextures[i].id);
         } else {
@@ -55,7 +55,7 @@ void Mesh::Draw(Shader& shader) {
         }
     }
     
-    shader.setFloat("material.shininess", 32.0f);
+    shader->setFloat("material.shininess", 32.0f);
     
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);

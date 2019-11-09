@@ -14,7 +14,7 @@ public:
     Shader(const char * vertex_file_path,const char * fragment_file_path);
     ~Shader();
     // use/activate the shader
-    void use();
+    void use() const;
     // utility uniform functions
     void setBool(const char * name, bool value) const;
     void setInt(const char * name, int value) const;

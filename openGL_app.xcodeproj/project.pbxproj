@@ -21,6 +21,7 @@
 /* Begin PBXFileReference section */
 		3660F4112373A00A0003F2B4 /* geometry.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = geometry.cpp; path = common/geometry.cpp; sourceTree = SOURCE_ROOT; };
 		3660F4122373A00A0003F2B4 /* geometry.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = geometry.hpp; path = common/geometry.hpp; sourceTree = SOURCE_ROOT; };
+		3660F414237621490003F2B4 /* world.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = world.h; path = common/world.h; sourceTree = SOURCE_ROOT; };
 		6313F8862160518300068A87 /* ImageLoader.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = ImageLoader.hpp; path = common/ImageLoader.hpp; sourceTree = SOURCE_ROOT; };
 		6313F8872160518300068A87 /* camera.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = camera.hpp; path = common/camera.hpp; sourceTree = SOURCE_ROOT; };
 		6313F8882160518300068A87 /* mesh.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mesh.cpp; path = common/mesh.cpp; sourceTree = SOURCE_ROOT; };
@@ -71,6 +72,7 @@
 				637FFD83234D40DA0050E256 /* light.hpp */,
 				3660F4112373A00A0003F2B4 /* geometry.cpp */,
 				3660F4122373A00A0003F2B4 /* geometry.hpp */,
+				3660F414237621490003F2B4 /* world.h */,
 			);
 			name = commom;
 			path = openGL_app;

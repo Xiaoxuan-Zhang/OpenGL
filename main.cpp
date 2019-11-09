@@ -8,13 +8,8 @@
 #include <glm/glm.hpp> //3D Math library
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <shaderProgram.hpp>
-#include <ImageLoader.hpp>
-#include <camera.hpp>
-#include <model.hpp>
-#include <light.hpp>
 #include <scene.hpp>
-#include <geometry.hpp>
+#include <world.h>
 
 using namespace std;
 
@@ -45,6 +40,8 @@ bool firstMouse = true;
 // timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+
+
 
 int main()
 {
@@ -82,32 +79,13 @@ int main()
     glfwSetErrorCallback(error_callback);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     
+    //build up world
+    Scene* newScene = defaultScene(SCR_WIDTH, SCR_HEIGHT, &camera);
+    
     // configure global opengl state
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
-    
-    Scene newScene;
-    newScene.screenSize(SCR_WIDTH, SCR_HEIGHT);
-    newScene.loadData();
-    
-    Model moon = *newScene.models["moon"];
-    Model rock= *newScene.models["rock"];
-    Model nano = *newScene.models["nanosuit"];
-    
-    newScene.addLight(POINT_LIGHT, glm::vec3(0.0f, 0.5f,  1.5f), glm::vec3(2.0f, 2.0f, 2.0f));
-    newScene.addLight(POINT_LIGHT, glm::vec3(-4.0f, 0.5f, -3.0f), glm::vec3(1.5f, 0.0f, 0.0f));
-    newScene.addLight(POINT_LIGHT, glm::vec3(3.0f, 0.5f,  1.0f), glm::vec3(0.0f, 0.0f, 1.5f));
-    newScene.addLight(POINT_LIGHT, glm::vec3(-.8f,  2.4f, -1.0f), glm::vec3(0.0f, 1.5f, 0.0f));
-    
-    Shader skyboxShader = *newScene.shaders["skybox"];
-    Shader texShader = *newScene.shaders["simple_texture"];
-    Shader envShader = *newScene.shaders["envmap"];
-    Shader nanoShader = *newScene.shaders["nano"];
-     
-    Geometry *cube = new Cube();
-    Geometry *quad = new Quad();
-    Geometry *skybox = new Skybox();
-    
+
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
@@ -122,70 +100,8 @@ int main()
         // -----
         processInput(window);
         
-        // render
-        // ------
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        
-        // 1. render scene into floating point framebuffer
-        // -----------------------------------------------
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-        glm::mat4 view = camera.GetViewMatrix();
-        glm::mat4 model;
-        
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(-3.0f, 0.0f, 0.0));
-        nanoShader.use();
-        nanoShader.setMat4("model", model);
-        nanoShader.setMat4("view", view);
-        nanoShader.setMat4("projection", projection);
-        nano.draw(nanoShader);
-        
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(3.0f, 2.0f, 0.0));
-        texShader.use();
-        texShader.setMat4("model", model);
-        texShader.setMat4("view", view);
-        texShader.setMat4("projection", projection);
-        moon.draw(texShader);
-        
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(2.0f, 9.0f, -3.0));
-        model = glm::scale(model, glm::vec3(2.0f, 2.0f, 2.0));
-        model = glm::rotate(model, glm::radians(45.0f), glm::vec3(0.0, 0.0, 1.0));
-        envShader.use();
-        envShader.setMat4("model", model);
-        envShader.setMat4("view", view);
-        envShader.setMat4("projection", projection);
-        envShader.setVec3("cameraPos", camera.Position);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, newScene.skyboxTexture);
-        cube->draw();
+        renderScene(newScene);
 
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0, 0.0, 0.0));
-        model = glm::scale(model, glm::vec3(20.0f, 20.0f, 20.0));
-        model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0, 0.0, 0.0));
-        texShader.use();
-        texShader.setMat4("model", model);
-        texShader.setMat4("view", view);
-        texShader.setMat4("projection", projection);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, newScene.textures["brick_wall"]);
-        quad->draw();
-        
-        //skybox
-        glDepthFunc(GL_LEQUAL);
-        skyboxShader.use();
-        view = glm::mat4(glm::mat3(camera.GetViewMatrix()));
-        skyboxShader.setMat4("view", view);
-        skyboxShader.setMat4("projection", projection);
-
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, newScene.skyboxTexture);
-        skybox->draw();
-        glDepthFunc(GL_LESS);
-        
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);
@@ -193,6 +109,7 @@ int main()
     }
     
     glfwTerminate();
+    delete newScene;
     return 0;
 }
 

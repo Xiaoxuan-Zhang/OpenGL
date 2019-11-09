@@ -44,7 +44,7 @@ public:
     vector<unsigned int> indices;
     vector<Texture> textures;
     vector<Texture> externalTextures;
-    void Draw(Shader& shader);
+    void Draw(Shader* shader);
     void BindExternalTextures(vector<Texture> textures);
     
 private:

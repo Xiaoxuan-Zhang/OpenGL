@@ -23,12 +23,11 @@ public:
     Model(const char* path);
     void loadModel(const char* path);
     void BindTexture(GLenum target,GLuint texture);
-    void draw(Shader& shader);
+    void draw(Shader* shader);
     
     vector<Mesh> meshes;
     vector<Texture> loadedTextures;
-    
-    
+        
 private:
     
     vector<Texture> externalTextures;

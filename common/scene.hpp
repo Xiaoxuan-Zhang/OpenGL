@@ -19,22 +19,25 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <model.hpp>
+#include <geometry.hpp>
 #include <shaderProgram.hpp>
 #include <ImageLoader.hpp>
 #include <light.hpp>
+#include <camera.hpp>
 
 using namespace std;
 
 class Scene {
 public:
-    Scene() {};
-    ~Scene() {};
+    Scene();
+    ~Scene();
     
     unordered_map<string, Shader*> shaders;
     unordered_map<string, unsigned int> textures;
     unordered_map<string, Model*> models;
+    unordered_map<string, Geometry*> primitives;
     vector<Light*> lights;
-    
+    Camera* camera;
     
     unsigned int screenWidth = 1280;
     unsigned int screenHeight = 720;
@@ -52,7 +55,10 @@ public:
     void addLight(LightType type, const glm::vec3& pos, const glm::vec3& color);
     void render();
     void configFrameBuffers();
-    void skybox();
+    void loadSkyboxTexture();
+    void addCamera(Camera* cam);
     
+    Geometry* addGeometry(string name, PrimitiveType type);
+    Model* addModel(string name, string filePath);
 };
 #endif /* scene_hpp */

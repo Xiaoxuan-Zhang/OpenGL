@@ -8,9 +8,49 @@
 
 #include "scene.hpp"
 
+Scene::Scene() {
+    
+};
+
+Scene::~Scene() {
+    for (auto m : this->models) {
+        delete m.second;
+    }
+    
+    for (auto p : this->primitives) {
+        delete p.second;
+    }
+    
+    for (auto l : this->lights) {
+        delete l;
+    }
+};
+
 void Scene::screenSize(unsigned int width, unsigned height) {
     this->screenWidth = width;
     this->screenHeight = height;
+};
+
+void Scene::addCamera(Camera* cam) {
+    this->camera = cam;
+};
+
+Geometry* Scene::addGeometry(string name, PrimitiveType type) {
+    if (type == CUBE) {
+        this->primitives[name] = new Cube();
+    } else if (type == QUAD) {
+        this->primitives[name] = new Quad();
+    } else if (type == SKYBOX) {
+        this->primitives[name] = new Skybox();
+    } else if (type == SPHERE) {
+        this->primitives[name] = new Sphere();
+    }
+    return this->primitives[name];
+};
+
+Model* Scene::addModel(string name, string filePath) {
+    this->models[name] = new Model(filePath.c_str());
+    return this->models[name];
 };
 
 void Scene::loadData() {
@@ -34,7 +74,7 @@ void Scene::loadData() {
     this->models["rock"] = new Model("resources/rock/rock.obj");
     this->models["nanosuit"] = new Model("resources/nanosuit/nanosuit.obj");
     
-    this->skybox();
+    this->loadSkyboxTexture();
     
     this->models["nanosuit"]->BindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
     
@@ -96,7 +136,7 @@ void Scene::configFrameBuffers() {
     }
 };
 
-void Scene::skybox() {
+void Scene::loadSkyboxTexture() {
     vector<string> imagePaths;
     imagePaths.push_back("resources/skybox/right.jpg");
     imagePaths.push_back("resources/skybox/left.jpg");
@@ -104,7 +144,6 @@ void Scene::skybox() {
     imagePaths.push_back("resources/skybox/bottom.jpg");
     imagePaths.push_back("resources/skybox/front.jpg");
     imagePaths.push_back("resources/skybox/back.jpg");
-    
     this->skyboxTexture = load_Cubemap(imagePaths);
 }
 
