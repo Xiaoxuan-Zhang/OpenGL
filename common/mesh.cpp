@@ -44,7 +44,7 @@ void Mesh::Draw(Shader* shader) {
         glBindTexture(GL_TEXTURE_2D, textures[i].id);
     }
     
-    texIndex = (unsigned int)textures.size();
+    texIndex = textures.size();
     for (unsigned int i = 0; i < externalTextures.size(); i ++ ){
         glActiveTexture(GL_TEXTURE0 + texIndex + i);
         shader->setInt(externalTextures[i].type.c_str(), texIndex + i);
@@ -59,7 +59,6 @@ void Mesh::Draw(Shader* shader) {
     
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
-    // always good practice to set everything back to defaults once configured.
     glBindVertexArray(0);
     glActiveTexture(GL_TEXTURE0);
 };

@@ -10,14 +10,16 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <iostream>
 #include <GL/glew.h>
 #include <fstream>
 #include <vector>
 
 using namespace std;
 
-GLuint load_BMP(const char * imagePath);
-GLuint load_Texture(const char * imagePath, bool gammaCorrection = false);
-GLuint load_Cubemap(vector<string> imagePaths);
+GLuint loadBMP(const char * imagePath);
+GLuint loadTexture(const char * imagePath, bool gammaCorrection = false);
+GLuint loadCubemap(vector<string> imagePaths);
+GLuint loadHDRTexture(const char * imagePath);
 #endif /* ImageLoader_hpp */
 

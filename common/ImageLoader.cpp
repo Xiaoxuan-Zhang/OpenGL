@@ -11,7 +11,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "std_image.h"
 
-GLuint load_BMP(const char * imagePath) {
+GLuint loadBMP(const char * imagePath) {
     // Data read from the header of the BMP file
     unsigned char header[54]; // Each BMP file begins by a 54-bytes header
     unsigned int dataPos;     // Position in the file where the actual data begins
@@ -78,9 +78,9 @@ GLuint load_BMP(const char * imagePath) {
     return textureID;
 }
 
-GLuint load_Texture(const char * imagePath, bool gammaCorrection) {
+GLuint loadTexture(const char * imagePath, bool gammaCorrection) {
     // Create one OpenGL texture
-    GLuint textureID;
+    GLuint textureID = -1;
     glGenTextures(1, &textureID);
     
     int width, height, nrChannels;
@@ -122,9 +122,9 @@ GLuint load_Texture(const char * imagePath, bool gammaCorrection) {
     return textureID;
 }
 
-unsigned int load_Cubemap(vector<string> imagePaths) {
+GLuint loadCubemap(vector<string> imagePaths) {
     // Create one OpenGL texture
-    unsigned int textureID;
+    GLuint textureID = -1;
     glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
     
@@ -151,4 +151,26 @@ unsigned int load_Cubemap(vector<string> imagePaths) {
     
     return textureID;
 }
+
+GLuint loadHDRTexture(const char * imagePath) {
+    stbi_set_flip_vertically_on_load(true);
+    int width, height, nrComponents;
+    float *data = stbi_loadf(imagePath, &width, &height, &nrComponents, 0);
+    GLuint hdrTexture = -1;
+    if (data) {
+        glGenTextures(1, &hdrTexture);
+        glBindTexture(GL_TEXTURE_2D, hdrTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, data);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        stbi_image_free(data);
+    } else {
+        std::cout << "Failed to load HDR image!" << std::endl;
+    }
+    glBindTexture(GL_TEXTURE_2D, 0);
+    return hdrTexture;
+}
+
 

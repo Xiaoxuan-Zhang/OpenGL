@@ -23,19 +23,20 @@ in VS_OUT {
 void main()
 {
     //diffuse
-    vec4 diffuse = texture(material.texture_diffuse1, fs_in.TexCoords);
+    vec3 diffuse = texture(material.texture_diffuse1, fs_in.TexCoords).rgb;
+    vec3 specular = texture(material.texture_specular1, fs_in.TexCoords).rgb;
     
     vec3 I = normalize(fs_in.Position - cameraPos);
     vec3 nor = normalize(fs_in.Normal);
     
     //reflection
     vec3 R_R = reflect(I, nor);
-    vec4 reflCol = texture(cubemap, R_R);
+    vec3 reflCol = texture(cubemap, R_R).rgb;
 
     //reflection map
     float reflect_intensity = texture(material.texture_reflection1, fs_in.TexCoords).r;
-    vec4 reflect_color;
+    vec3 reflect_color;
     reflect_color = reflCol * reflect_intensity;
 
-    FragColor = diffuse + reflect_color;
+    FragColor = vec4(diffuse, 1.0);
 }

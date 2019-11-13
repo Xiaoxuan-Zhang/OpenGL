@@ -41,8 +41,6 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-
-
 int main()
 {
     glewExperimental = GL_TRUE; // for earlier version glew 1.13.0
@@ -79,13 +77,14 @@ int main()
     glfwSetErrorCallback(error_callback);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     
-    //build up world
-    Scene* newScene = defaultScene(SCR_WIDTH, SCR_HEIGHT, &camera);
-    
     // configure global opengl state
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
-
+    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+    
+    //build up world
+    Scene* newScene = defaultScene(SCR_WIDTH, SCR_HEIGHT, &camera);
+    
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))

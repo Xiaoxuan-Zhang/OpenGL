@@ -128,7 +128,7 @@ vector<Texture> Model::loadMaterialTextures(aiMaterial *mat, aiTextureType type,
         {   // if texture hasn't been loaded already, load it
             Texture texture;
             string imgPath = directory + "/" + str.C_Str();
-            texture.id = load_Texture(imgPath.c_str());
+            texture.id = loadTexture(imgPath.c_str());
             texture.type = typeName;
             texture.path = str.C_Str();
             textures.push_back(texture);
