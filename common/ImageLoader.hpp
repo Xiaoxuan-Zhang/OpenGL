@@ -19,7 +19,7 @@ using namespace std;
 
 GLuint loadBMP(const char * imagePath);
 GLuint loadTexture(const char * imagePath, bool gammaCorrection = false);
-GLuint loadCubemap(vector<string> imagePaths);
+GLuint loadCubemap(string folderPath, string fileFormat = "jpg");
 GLuint loadHDRTexture(const char * imagePath);
 #endif /* ImageLoader_hpp */
 

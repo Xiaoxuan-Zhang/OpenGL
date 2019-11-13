@@ -55,7 +55,7 @@ void Mesh::Draw(Shader* shader) {
         }
     }
     
-    shader->setFloat("material.shininess", 32.0f);
+    //shader->setFloat("material.shininess", 32.0f);
     
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);

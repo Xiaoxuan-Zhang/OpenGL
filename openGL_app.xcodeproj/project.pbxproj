@@ -19,6 +19,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		36229565237C930300127588 /* utilities.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = utilities.h; sourceTree = SOURCE_ROOT; };
 		3660F4112373A00A0003F2B4 /* geometry.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = geometry.cpp; path = common/geometry.cpp; sourceTree = SOURCE_ROOT; };
 		3660F4122373A00A0003F2B4 /* geometry.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = geometry.hpp; path = common/geometry.hpp; sourceTree = SOURCE_ROOT; };
 		3660F414237621490003F2B4 /* world.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = world.h; path = common/world.h; sourceTree = SOURCE_ROOT; };
@@ -73,6 +74,7 @@
 				3660F4112373A00A0003F2B4 /* geometry.cpp */,
 				3660F4122373A00A0003F2B4 /* geometry.hpp */,
 				3660F414237621490003F2B4 /* world.h */,
+				36229565237C930300127588 /* utilities.h */,
 			);
 			name = commom;
 			path = openGL_app;

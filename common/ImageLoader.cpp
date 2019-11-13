@@ -122,7 +122,15 @@ GLuint loadTexture(const char * imagePath, bool gammaCorrection) {
     return textureID;
 }
 
-GLuint loadCubemap(vector<string> imagePaths) {
+GLuint loadCubemap(string folderPath, string fileFormat) {
+    vector<string> imagePaths;
+    imagePaths.push_back(folderPath + "/right." + fileFormat);
+    imagePaths.push_back(folderPath + "/left." + fileFormat);
+    imagePaths.push_back(folderPath + "/top." + fileFormat);
+    imagePaths.push_back(folderPath + "/bottom." + fileFormat);
+    imagePaths.push_back(folderPath + "/front." + fileFormat);
+    imagePaths.push_back(folderPath + "/back." + fileFormat);
+    
     // Create one OpenGL texture
     GLuint textureID = -1;
     glGenTextures(1, &textureID);

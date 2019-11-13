@@ -42,26 +42,23 @@ public:
     Camera* camera;
     
     
-    unsigned int screenWidth = 1280;
-    unsigned int screenHeight = 720;
+    GLuint screenWidth = 1280;
+    GLuint screenHeight = 720;
     
-    unsigned int skyboxTexture;
-    unsigned int hdrFBO;
-    unsigned int colorBuffers[2];
-    unsigned int rboDepth;
-    unsigned int pingpongFBO[2];
-    unsigned int pingpongColorbuffers[2];
-    unsigned int attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+    GLuint skyboxTexture;
+    GLuint hdrFBO;
+    GLuint colorBuffers[2];
+    GLuint rboDepth;
+    GLuint pingpongFBO[2];
+    GLuint pingpongColorbuffers[2];
+    GLuint attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
     
-    void screenSize(unsigned int width, unsigned height);
+    void screenSize(GLuint width, GLuint height);
     void addLight(LightType type, const glm::vec3& pos, const glm::vec3& color);
     void render();
     void configFrameBuffers();
-    void loadSkyboxTexture();
     void addCamera(Camera* cam);
-    void addNullHdrCubemapTexture(string name, GLuint width, GLuint height);
-    void addNullHdrCubemapMipmap(string name, GLuint width, GLuint height);
-    void addNullTexture(string name, GLuint width, GLuint height);
+    void addTexture(string name, GLuint id);
     
     Geometry* addGeometry(string name, PrimitiveType type);
     Model* addModel(string name, string filePath);

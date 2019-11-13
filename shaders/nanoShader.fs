@@ -4,6 +4,7 @@ struct Material {
   sampler2D texture_diffuse1;
   sampler2D texture_specular1;
   sampler2D texture_reflection1;
+  sampler2D texture_normal1;
   float shininess;
 };
 
@@ -38,5 +39,5 @@ void main()
     vec3 reflect_color;
     reflect_color = reflCol * reflect_intensity;
 
-    FragColor = vec4(diffuse, 1.0);
+    FragColor = vec4(diffuse + reflect_color, 1.0);
 }
