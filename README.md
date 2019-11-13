@@ -1,5 +1,5 @@
 # OpenGL
-A project for the purpose of learning from: https://learnopengl.com/Introduction
+A Xcode project for the purpose of learning from: https://learnopengl.com/Introduction. 
 
 * A simple rendering
 ![Example_1](https://github.com/Xiaoxuan-Zhang/OpenGL/blob/master/results/openGL_Day1.png?raw=true)
