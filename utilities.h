@@ -13,6 +13,21 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+void checkGLErrors() {
+    GLenum err = glGetError();
+    while (err != GL_NO_ERROR) {
+        printf("\nAn error has occurred! Error code = %d\n", err);
+        err = glGetError();
+    }
+}
+
+void checkFramebufferStatus() {
+    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (status != GL_FRAMEBUFFER_COMPLETE) {
+        printf("\nThere is a problem with the FBO. Error code = %d\n", status);
+    }
+}
+
 unsigned int addNullHdrCubemapTexture(unsigned int width, unsigned int height) {
     unsigned int cubemap;
     glGenTextures(1, &cubemap);
@@ -49,16 +64,31 @@ unsigned int addNullHdrCubemapMipmap(unsigned int width, unsigned int height) {
     return cubeMipmap;
 }
 
-unsigned int addNullTexture(unsigned int width, unsigned int height) {
+unsigned int addNullTexture(unsigned int width, unsigned int height, GLuint internalFormat = GL_RGB, GLenum format = GL_RGB, GLenum dataType = GL_FLOAT) {
     unsigned int nullTexture;
     glGenTextures(1, &nullTexture);
     glBindTexture(GL_TEXTURE_2D, nullTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, width, height, 0, GL_RG, GL_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, dataType, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     return nullTexture;
+}
+
+unsigned int addNullDepthTexture(unsigned int width, unsigned int height) {
+    unsigned int depthMap;
+    glGenTextures(1, &depthMap);
+    glBindTexture(GL_TEXTURE_2D, depthMap);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
+                 width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    float borderColor[] = {1.0f, 1.0f, 1.0f, 1.0f};
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+    return depthMap;
 }
 
 #endif /* utilities_h */

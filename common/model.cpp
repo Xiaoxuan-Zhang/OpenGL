@@ -67,14 +67,23 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene) {
         myVector3.y = mesh->mNormals[i].y;
         myVector3.z = mesh->mNormals[i].z;
         vertex.Normal = myVector3;
-        myVector3.x = mesh->mTangents[i].x;
-        myVector3.y = mesh->mTangents[i].y;
-        myVector3.z = mesh->mTangents[i].z;
-        vertex.Tangent = myVector3;
-        myVector3.x = mesh->mBitangents[i].x;
-        myVector3.y = mesh->mBitangents[i].y;
-        myVector3.z = mesh->mBitangents[i].z;
-        vertex.Bitangent = myVector3;
+        if (mesh->mTangents != NULL) {
+            myVector3.x = mesh->mTangents[i].x;
+            myVector3.y = mesh->mTangents[i].y;
+            myVector3.z = mesh->mTangents[i].z;
+            vertex.Tangent = myVector3;
+        } else {
+            vertex.Tangent = glm::vec3(0.0f, 0.0f, 0.0f);
+        }
+        if (mesh->mBitangents != NULL) {
+            myVector3.x = mesh->mBitangents[i].x;
+            myVector3.y = mesh->mBitangents[i].y;
+            myVector3.z = mesh->mBitangents[i].z;
+            vertex.Bitangent = myVector3;
+        } else {
+            vertex.Bitangent = glm::vec3(0.0f, 0.0f, 0.0f);
+        }
+        
         if (mesh->mTextureCoords[0]) {
             glm::vec2 myVector2;
             myVector2.x = mesh->mTextureCoords[0][i].x;
@@ -128,7 +137,12 @@ vector<Texture> Model::loadMaterialTextures(aiMaterial *mat, aiTextureType type,
         {   // if texture hasn't been loaded already, load it
             Texture texture;
             string imgPath = directory + "/" + str.C_Str();
-            texture.id = loadTexture(imgPath.c_str());
+            //add gamma correction to diffuse textures
+            bool gammaCorrection = false;
+            if (type == aiTextureType_DIFFUSE) {
+                gammaCorrection = true;
+            }
+            texture.id = loadTexture(imgPath.c_str(), gammaCorrection);
             texture.type = typeName;
             texture.path = str.C_Str();
             textures.push_back(texture);

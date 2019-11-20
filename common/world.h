@@ -10,7 +10,9 @@
 #define world_h
 
 #include <scene.hpp>
+#include <iostream>
 #include "utilities.h"
+
 
 /* PBR pipeline */
 Scene* createPBRScene(int screenWidth, int screenHeight, Camera *camera) {
@@ -28,12 +30,16 @@ Scene* createPBRScene(int screenWidth, int screenHeight, Camera *camera) {
     newScene->shaders["prefilter_envmap"] = new Shader("shaders/cubemap.vs", "shaders/PBR/prefilterEnvmap.fs");
     newScene->shaders["brdf_envmap"] = new Shader("shaders/ndc.vs", "shaders/PBR/integrateBRDF.fs");
     newScene->shaders["ndc"] = new Shader("shaders/ndc.vs", "shaders/ndc.fs");
-
+    
+    newScene->shaders["cubemap"]->use();
     newScene->shaders["cubemap"]->setInt("hdrTexture", 0);
+    newScene->shaders["hdr_skybox"]->use();
     newScene->shaders["hdr_skybox"]->setInt("hdrSkybox", 0);
+    newScene->shaders["irradiance_convolution"]->use();
     newScene->shaders["irradiance_convolution"]->setInt("hdrSkybox", 0);
+    newScene->shaders["prefilter_envmap"]->use();
     newScene->shaders["prefilter_envmap"]->setInt("hdrSkybox", 0);
-
+    
     // load textures
     newScene->addTexture("brick_wall", loadTexture("resources/brickwall.jpg", true));
     newScene->addTexture("pbr_albedo", loadTexture("resources/rustediron1/basecolor.png", false));
@@ -57,7 +63,7 @@ Scene* createPBRScene(int screenWidth, int screenHeight, Camera *camera) {
     //enviroment mipmap
     newScene->addTexture("env_mipmap", addNullHdrCubemapMipmap(128, 128));
     // brdf LUT
-    newScene->addTexture("brdf_LUT", addNullTexture(512, 512));
+    newScene->addTexture("brdf_LUT", addNullTexture(512, 512, GL_RG16F, GL_RG, GL_FLOAT));
 
     //render once before loop
     unsigned int FBO, RBO;
@@ -79,7 +85,7 @@ Scene* createPBRScene(int screenWidth, int screenHeight, Camera *camera) {
         glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3( 0.0f,  0.0f,  1.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
         glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3( 0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f,  0.0f))
     };
-
+    
     //convert HDR equirectangular map to cubemap
     newScene->shaders["cubemap"]->use();
     newScene->shaders["cubemap"]->setMat4("projection", capProjection);
@@ -262,16 +268,21 @@ Scene* reflectionScene(int screenWidth, int screenHeight, Camera *camera) {
     newScene->shaders["skybox"] = new Shader("shaders/skybox.vs", "shaders/skybox.fs");
     newScene->shaders["simple_texture"] = new Shader("shaders/simpleTexture.vs", "shaders/simpleTexture.fs");
     newScene->shaders["envmap"] = new Shader("shaders/envmap.vs", "shaders/envmap.fs");
-    newScene->shaders["nano"] = new Shader("shaders/nanoShader.vs", "shaders/nanoShader.fs");
+    newScene->shaders["nano"] = new Shader("shaders/modelShader.vs", "shaders/nanoShader.fs");
     newScene->shaders["hdr_skybox"] = new Shader("shaders/hdrSkybox.vs", "shaders/hdrSkybox.fs");
     newScene->shaders["cubemap"] = new Shader("shaders/cubemap.vs", "shaders/cubemap.fs"); //equirectangular skybox
     newScene->shaders["hdr_skybox"] = new Shader("shaders/hdrSkybox.vs", "shaders/hdrSkybox.fs");
     
-    newScene->shaders["skybox"]->setInt("skybox", 0);
-    newScene->shaders["simple_texture"]->setInt("texture_diffuse", 0);
-    newScene->shaders["envmap"]->setInt("skybox", 0);
-    newScene->shaders["cubemap"]->setInt("hdrTexture", 0);
+    newScene->shaders["hdr_skybox"]->use();
     newScene->shaders["hdr_skybox"]->setInt("hdrSkybox", 0);
+    newScene->shaders["skybox"]->use();
+    newScene->shaders["skybox"]->setInt("skybox", 0);
+    newScene->shaders["envmap"]->use();
+    newScene->shaders["envmap"]->setInt("skybox", 0);
+    newScene->shaders["simple_texture"]->use();
+    newScene->shaders["simple_texture"]->setInt("texture_diffuse", 0);
+    newScene->shaders["cubemap"]->use();
+    newScene->shaders["cubemap"]->setInt("hdrTexture", 0);
     
     // load textures
     newScene->addTexture("skybox", loadCubemap("resources/mp_blood/", "tga"));
@@ -373,19 +384,6 @@ void renderReflectionScene(Scene* scene) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, scene->textures["env_cubemap"]);
     scene->primitives["cube0"]->draw();
-
-//    Shader* texShader = scene->shaders["simple_texture"];
-//    texShader->use();
-//    model = glm::mat4(1.0f);
-//    model = glm::translate(model, glm::vec3(0.0, 0.0, 0.0));
-//    model = glm::scale(model, glm::vec3(50.0f, 50.0f, 50.0));
-//    model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0, 0.0, 0.0));
-//    texShader->setMat4("model", model);
-//    texShader->setMat4("view", view);
-//    texShader->setMat4("projection", projection);
-//    glActiveTexture(GL_TEXTURE0);
-//    glBindTexture(GL_TEXTURE_2D, scene->textures["brick_wall"]);
-//    scene->primitives["quad0"]->draw();
     
     //skybox
     Shader* skyShader = scene->shaders["hdr_skybox"];
@@ -397,6 +395,268 @@ void renderReflectionScene(Scene* scene) {
     glBindTexture(GL_TEXTURE_CUBE_MAP, scene->textures["env_cubemap"]);
     scene->primitives["skybox"]->draw();
     glDepthFunc(GL_LESS);
+}
+
+/*
+ Shadows:
+ 1. Choose orthogonal projection if the light source is a directional light, perspective projection if the light source is point light or spot light.
+ 2. There might be various of ways to improve the jagged shadow.
+ */
+Scene* shadowScene(int screenWidth, int screenHeight, Camera *camera) {
+    Scene* newScene = new Scene();
+    newScene->screenSize(screenWidth, screenHeight);
+    newScene->addCamera(camera);
+    camera->Position = glm::vec3(-5.0, 5.0f, 5.0f);
+    
+    // build and compile shaders
+    newScene->shaders["house"] = new Shader("shaders/modelShader.vs", "shaders/houseShader.fs");
+    newScene->shaders["depthmap"] = new Shader("shaders/depthMap.vs", "shaders/depthMap.fs");
+    newScene->shaders["depthmap_vis"] = new Shader("shaders/depthMapVis.vs", "shaders/depthMapVis.fs");
+    
+    newScene->shaders["depthmap_vis"]->use();
+    newScene->shaders["depthmap_vis"]->setInt("depthMap", 0);
+    
+    // load textures
+    newScene->addTexture("container", loadTexture("resources/container2.png", false));
+    newScene->addTexture("wood", loadTexture("resources/wood.png", false));
+    newScene->addTexture("depthmap", addNullDepthTexture(1024, 1024));
+    newScene->addTexture("colormap", addNullTexture(1024, 1024));
+    
+    // load models
+    newScene->addModel("nanosuit", "resources/nanosuit/nanosuit.obj");
+    newScene->addModel("moon", "resources/44-moon-photorealistic-2k/Moon 2K.obj");
+    
+    // add primitives
+    Geometry* cube = newScene->addGeometry("cube0", CUBE);
+    Geometry* quad = newScene->addGeometry("quad0", QUAD);
+    
+    unsigned int FBO;
+    glGenFramebuffers(1, &FBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+    newScene->FBOs["depthFBO"] = FBO;
+    //attach depth texture to this framebuffer's depth buffer
+    //glBindTexture(GL_TEXTURE_2D, newScene->textures["colormap"]);
+    glBindTexture(GL_TEXTURE_2D, newScene->textures["depthmap"]);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, newScene->textures["depthmap"], 0);
+    //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, newScene->textures["colormap"], 0);
+    //since only depth info for this texture, we explicitly tell OpenGL we don't need to draw color buffer
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    
+    checkGLErrors();
+    return newScene;
+}
+
+void renderShadowScene(Scene* scene) {
+    Camera* cam = scene->camera;
+    float nearPlane = 0.1f;
+    float farPlane = 100.0f;
+    glm::mat4 projection = glm::perspective(glm::radians(cam->Zoom), (float)scene->screenWidth/ (float)scene->screenHeight, 0.1f, 100.0f);
+    glm::mat4 view = cam->GetViewMatrix();
+    glm::vec3 lightPosition = glm::vec3(-5.0f, 15.0f, 10.0f);
+    glm::mat4 lightProjection = glm::ortho(-20.0f, 20.0f, -10.0f, 30.0f, nearPlane, farPlane);
+    //    //glm::mat4 lightProjection = glm::perspective(glm::radians(90.0f), 1.0f, nearPlane, farPlane);
+    glm::mat4 lightView = glm::lookAt(lightPosition, glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0f, 1.0f, 0.0f));
+    glm::mat4 model;
+    
+    // first pass for depth map
+    glBindFramebuffer(GL_FRAMEBUFFER, scene->FBOs["depthFBO"]);
+    glViewport(0, 0, 1024, 1024);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    Shader* shader = scene->shaders["depthmap"];
+    shader->use();
+    shader->setMat4("lightSpaceMatrix", lightProjection * lightView);
+    
+    model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(0.0, 2.0, -2.0));
+    shader->setMat4("model", model);
+    scene->primitives["cube0"]->draw();
+    
+    model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(3.0, 0.0, 0.0));
+    model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
+    shader->setMat4("model", model);
+    scene->models["nanosuit"]->draw(shader);
+    
+    model = glm::mat4(1.0f);
+    model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
+    model = glm::scale(model, glm::vec3(30.0, 30.0, 30.0));
+    shader->setMat4("model", model);
+    scene->primitives["quad0"]->draw();
+
+    checkGLErrors();
+    checkFramebufferStatus();
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    
+    // second pass
+    glViewport(0, 0, scene->screenWidth, scene->screenHeight);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    shader = scene->shaders["house"];
+    shader->use();
+    shader->setInt("depthMap", 5);
+    glActiveTexture(GL_TEXTURE5);
+    glBindTexture(GL_TEXTURE_2D, scene->textures["depthmap"]);
+    shader->setMat4("view", view);
+    shader->setMat4("projection", projection);
+    shader->setVec3("cameraPos", cam->Position);
+    shader->setVec3("lightPos", lightPosition);
+    shader->setMat4("lightSpaceMatrix", lightProjection * lightView);
+    
+    model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(0.0, 2.0, -2.0));
+    shader->setMat4("model", model);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, scene->textures["container"]);
+    scene->primitives["cube0"]->draw();
+    
+    model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(3.0, 0.0, 0.0));
+    model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
+    shader->setMat4("model", model);
+    scene->models["nanosuit"]->draw(shader);
+    
+    model = glm::mat4(1.0f);
+    model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
+    model = glm::scale(model, glm::vec3(30.0, 30.0, 30.0));
+    shader->setMat4("model", model);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, scene->textures["wood"]);
+    scene->primitives["quad0"]->draw();
+}
+/* complex scene */
+Scene* complexScene(int screenWidth, int screenHeight, Camera *camera) {
+    Scene* newScene = new Scene();
+    newScene->screenSize(screenWidth, screenHeight);
+    newScene->addCamera(camera);
+    camera->Position = glm::vec3(3.0f, 4.0f, -10.0f);
+    
+    // build and compile shaders
+    newScene->shaders["skybox"] = new Shader("shaders/skybox.vs", "shaders/skybox.fs");
+    newScene->shaders["house"] = new Shader("shaders/modelShader.vs", "shaders/houseShader.fs");
+    newScene->shaders["depthmap"] = new Shader("shaders/depthMap.vs", "shaders/depthMap.fs");
+    newScene->shaders["depthmap_vis"] = new Shader("shaders/depthMapVis.vs", "shaders/depthMapVis.fs");
+    
+    newScene->shaders["skybox"]->use();
+    newScene->shaders["skybox"]->setInt("skybox", 0);
+    newScene->shaders["depthmap_vis"]->use();
+    newScene->shaders["depthmap_vis"]->setInt("depthMap", 0);
+    
+    // load textures
+    newScene->addTexture("skybox", loadCubemap("resources/hw_nightsky/", "tga"));
+    newScene->addTexture("depthmap", addNullDepthTexture(1024, 1024));
+    newScene->addTexture("colormap", addNullTexture(1024, 1024));
+    newScene->addTexture("wood", loadTexture("resources/wood.png", true));
+    
+    // load models
+    newScene->addModel("building", "resources/building/Street environment_V01.obj");
+    newScene->addModel("nanosuit", "resources/nanosuit/nanosuit.obj");
+    
+    // add primitives
+    Geometry* cube = newScene->addGeometry("cube0", CUBE);
+    Geometry* quad = newScene->addGeometry("quad0", QUAD);
+    newScene->addGeometry("skybox", SKYBOX);
+    
+    unsigned int FBO;
+    glGenFramebuffers(1, &FBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+    newScene->FBOs["depthFBO"] = FBO;
+    //attach depth texture to this framebuffer's depth buffer
+    //glBindTexture(GL_TEXTURE_2D, newScene->textures["colormap"]);
+    glBindTexture(GL_TEXTURE_2D, newScene->textures["depthmap"]);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, newScene->textures["depthmap"], 0);
+    //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, newScene->textures["colormap"], 0);
+    //since only depth info for this texture, we explicitly tell OpenGL we don't need to draw color buffer
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    
+    checkGLErrors();
+    return newScene;
+}
+
+void renderComplexScene(Scene* scene) {
+    Camera* cam = scene->camera;
+    float nearPlane = 0.1f;
+    float farPlane = 50.0;
+    glm::mat4 projection = glm::perspective(glm::radians(cam->Zoom), (float)scene->screenWidth/ (float)scene->screenHeight, 0.1f, 500.0f);
+    glm::mat4 view = cam->GetViewMatrix();
+    glm::vec3 lightPosition = glm::vec3(5.0f, 4.0f, 5.0f);
+    glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, nearPlane, farPlane);
+    //glm::mat4 lightProjection = glm::perspective(glm::radians(90.0f), 1.0f, nearPlane, farPlane);
+    glm::mat4 lightView = glm::lookAt(lightPosition, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    glm::mat4 model;
+    
+    // first pass for depth map
+    glViewport(0, 0, 1024, 1024);
+    glBindFramebuffer(GL_FRAMEBUFFER, scene->FBOs["depthFBO"]);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    Shader* shader = scene->shaders["depthmap"];
+    shader->use();
+    shader->setMat4("lightSpaceMatrix", lightProjection * lightView);
+    
+    model = glm::mat4(1.0f);
+    model = glm::scale(model, glm::vec3(2.0, 2.0, 2.0));
+    shader->setMat4("model", model);
+    scene->models["building"]->draw(shader);
+    
+    model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(0.0, 0.1, 0.0));
+    model = glm::rotate(model, glm::radians(-45.0f), glm::vec3(0.0, 1.0, 0.0));
+    model = glm::scale(model, glm::vec3(0.2, 0.2, 0.2));
+    shader->setMat4("model", model);
+    scene->models["nanosuit"]->draw(shader);
+    
+    checkGLErrors();
+    checkFramebufferStatus();
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    
+    // second pass
+    glViewport(0, 0, scene->screenWidth, scene->screenHeight);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    shader = scene->shaders["house"];
+    shader->use();
+    shader->setInt("depthMap", 5);
+    glActiveTexture(GL_TEXTURE5);
+    glBindTexture(GL_TEXTURE_2D, scene->textures["depthmap"]);
+    shader->setMat4("view", view);
+    shader->setMat4("projection", projection);
+    shader->setVec3("cameraPos", cam->Position);
+    shader->setVec3("lightPos", lightPosition);
+    shader->setMat4("lightSpaceMatrix", lightProjection * lightView);
+
+    model = glm::mat4(1.0f);
+    model = glm::scale(model, glm::vec3(2.0, 2.0, 2.0));
+    shader->setMat4("model", model);
+    scene->models["building"]->draw(shader);
+
+    model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(0.0, 0.1, 0.0));
+    model = glm::rotate(model, glm::radians(-45.0f), glm::vec3(0.0, 1.0, 0.0));
+    model = glm::scale(model, glm::vec3(0.2, 0.2, 0.2));
+    shader->setMat4("model", model);
+    scene->models["nanosuit"]->draw(shader);
+
+    //skybox
+    glDepthFunc(GL_LEQUAL);
+    Shader* skyShader = scene->shaders["skybox"];
+    skyShader->use();
+    skyShader->setMat4("view", view);
+    skyShader->setMat4("projection", projection);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, scene->textures["skybox"]);
+    scene->primitives["skybox"]->draw();
+    glDepthFunc(GL_LESS);
+    
+//    glViewport(0, 0, scene->screenWidth, scene->screenHeight);
+//    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//    Shader* quadShader = scene->shaders["depthmap_vis"];
+//    quadShader->use();
+//    quadShader->setFloat("near_plane", nearPlane);
+//    quadShader->setFloat("far_plane", farPlane);
+//    glActiveTexture(GL_TEXTURE0);
+//    glBindTexture(GL_TEXTURE_2D, scene->textures["depthmap"]);
+//    scene->primitives["quad0"]->draw();
 }
 
 #endif /* world_h */

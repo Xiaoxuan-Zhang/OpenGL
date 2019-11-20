@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		3660F4132373A00A0003F2B4 /* geometry.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3660F4112373A00A0003F2B4 /* geometry.cpp */; };
+		36668E6423829BCC004FAA8E /* world.h in Sources */ = {isa = PBXBuildFile; fileRef = 3660F414237621490003F2B4 /* world.h */; };
+		36668E6523829BCC004FAA8E /* utilities.h in Sources */ = {isa = PBXBuildFile; fileRef = 36229565237C930300127588 /* utilities.h */; };
 		6313F8922160518300068A87 /* mesh.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6313F8882160518300068A87 /* mesh.cpp */; };
 		6313F8932160518300068A87 /* model.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6313F88A2160518300068A87 /* model.cpp */; };
 		6313F8942160518300068A87 /* ImageLoader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6313F88B2160518300068A87 /* ImageLoader.cpp */; };
@@ -192,6 +194,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				36668E6423829BCC004FAA8E /* world.h in Sources */,
+				36668E6523829BCC004FAA8E /* utilities.h in Sources */,
 				637FFD81234D38BA0050E256 /* scene.cpp in Sources */,
 				6313F8962160518300068A87 /* shaderProgram.cpp in Sources */,
 				3660F4132373A00A0003F2B4 /* geometry.cpp in Sources */,

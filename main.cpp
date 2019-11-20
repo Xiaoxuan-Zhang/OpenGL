@@ -82,9 +82,13 @@ int main()
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
     
+    checkGLErrors();
+    
     //build up world
     //Scene* newScene = createPBRScene(SCR_WIDTH, SCR_HEIGHT, &camera);
-    Scene* newScene = reflectionScene(SCR_WIDTH, SCR_HEIGHT, &camera);
+    //Scene* newScene = reflectionScene(SCR_WIDTH, SCR_HEIGHT, &camera);
+    //Scene* newScene = shadowScene(SCR_WIDTH, SCR_HEIGHT, &camera);
+    Scene* newScene = complexScene(SCR_WIDTH, SCR_HEIGHT, &camera);
     
     // render loop
     // -----------
@@ -101,7 +105,9 @@ int main()
         processInput(window);
         
         //renderPBRScene(newScene);
-        renderReflectionScene(newScene);
+        //renderReflectionScene(newScene);
+        //renderShadowScene(newScene);
+        renderComplexScene(newScene);
         
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
