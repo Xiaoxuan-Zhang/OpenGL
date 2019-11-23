@@ -6,3 +6,6 @@ A Xcode project for the purpose of learning from: https://learnopengl.com/Introd
 
 * PBR
 ![PBR example](https://github.com/Xiaoxuan-Zhang/OpenGL/blob/master/results/pbr.png?raw=true)
+
+* Simple Shadows
+![Shadows example](https://github.com/Xiaoxuan-Zhang/OpenGL/blob/master/results/shadows.png?raw=true)
