@@ -8,8 +8,7 @@
 #include <glm/glm.hpp> //3D Math library
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <scene.hpp>
-#include <world.h>
+#include "world.h"
 
 using namespace std;
 
@@ -89,7 +88,7 @@ int main()
     //Scene* newScene = reflectionScene(SCR_WIDTH, SCR_HEIGHT, &camera);
     //Scene* newScene = shadowScene(SCR_WIDTH, SCR_HEIGHT, &camera);
     Scene* newScene = complexScene(SCR_WIDTH, SCR_HEIGHT, &camera);
-    
+    //Scene* newScene = deferredScene(SCR_WIDTH, SCR_HEIGHT, &camera);
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
@@ -108,7 +107,7 @@ int main()
         //renderReflectionScene(newScene);
         //renderShadowScene(newScene);
         renderComplexScene(newScene);
-        
+        //renderDeferredScene(newScene);
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);

@@ -59,17 +59,19 @@ void main()
     vec3 nor = normalize(fs_in.Normal);
     vec3 viewDir = normalize(cameraPos - fs_in.Position);
     vec3 lightDir = normalize(lightPos - fs_in.Position);
+    vec3 halfDir = normalize(lightDir + viewDir);
     
     float diff = max(dot(lightDir, nor), 0.0);
     vec3 diffCol = diff * lightCol;
-    float specular = pow(max(dot(viewDir, nor), 0.0), 32.0);
+    
+    float specular = pow(max(dot(halfDir, nor), 0.0), 32.0);
     vec3 specCol = specular * lightCol;
     
     float bias = max(0.05 * (1.0 - dot(nor, lightDir)), 0.005);
     float sd = calcShadow(bias);
-    float ambient = 0.2;
-    vec3 col = ambient * diffuseTex + ((1.0 - sd) * (diffCol + specCol)) * diffuseTex;
+    float ambient = 0.05;
+    vec3 col = ambient + ((1.0 - sd) * (diffCol + specCol)) * diffuseTex;
     //gamma correction
-    col = pow(col, vec3(1.0/2.2));
+    //col = pow(col, vec3(1.0/2.2));
     FragColor = vec4(col, 1.0);
 }

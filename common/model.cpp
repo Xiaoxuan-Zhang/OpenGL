@@ -56,50 +56,76 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene) {
     vector<Vertex> vertices;
     vector<unsigned int> indices;
     vector<Texture> textures;
+    unordered_map<unsigned int, vector<glm::vec3>> tangents;
+    unordered_map<unsigned int, vector<glm::vec3>> bitangents;
     for (unsigned int i = 0; i < mesh->mNumVertices; i++){
         Vertex vertex;
-        glm::vec3 myVector3;
-        myVector3.x = mesh->mVertices[i].x;
-        myVector3.y = mesh->mVertices[i].y;
-        myVector3.z = mesh->mVertices[i].z;
-        vertex.Position = myVector3;
-        myVector3.x = mesh->mNormals[i].x;
-        myVector3.y = mesh->mNormals[i].y;
-        myVector3.z = mesh->mNormals[i].z;
-        vertex.Normal = myVector3;
+        glm::vec3 pos = glm::vec3(0.0f), nor = glm::vec3(0.0f);
+        glm::vec2 uv = glm::vec2(0.0f);
+        pos.x = mesh->mVertices[i].x;
+        pos.y = mesh->mVertices[i].y;
+        pos.z = mesh->mVertices[i].z;
+        vertex.Position = pos;
+        nor.x = mesh->mNormals[i].x;
+        nor.y = mesh->mNormals[i].y;
+        nor.z = mesh->mNormals[i].z;
+        vertex.Normal = nor;
+        
+        if (mesh->mTextureCoords[0]) {
+            uv.x = mesh->mTextureCoords[0][i].x;
+            uv.y = mesh->mTextureCoords[0][i].y;
+        }
+        vertex.TexCoords = uv;
+        vertex.Tangent = glm::vec3(0.0f);
+        vertex.Bitangent = glm::vec3(0.0f);
         if (mesh->mTangents != NULL) {
-            myVector3.x = mesh->mTangents[i].x;
-            myVector3.y = mesh->mTangents[i].y;
-            myVector3.z = mesh->mTangents[i].z;
-            vertex.Tangent = myVector3;
+            vertex.Tangent.x = mesh->mTangents[i].x;
+            vertex.Tangent.y = mesh->mTangents[i].y;
+            vertex.Tangent.z = mesh->mTangents[i].z;
         } else {
             vertex.Tangent = glm::vec3(0.0f, 0.0f, 0.0f);
         }
+
         if (mesh->mBitangents != NULL) {
-            myVector3.x = mesh->mBitangents[i].x;
-            myVector3.y = mesh->mBitangents[i].y;
-            myVector3.z = mesh->mBitangents[i].z;
-            vertex.Bitangent = myVector3;
+            vertex.Bitangent.x = mesh->mBitangents[i].x;
+            vertex.Bitangent.y = mesh->mBitangents[i].y;
+            vertex.Bitangent.z = mesh->mBitangents[i].z;
         } else {
             vertex.Bitangent = glm::vec3(0.0f, 0.0f, 0.0f);
         }
         
-        if (mesh->mTextureCoords[0]) {
-            glm::vec2 myVector2;
-            myVector2.x = mesh->mTextureCoords[0][i].x;
-            myVector2.y = mesh->mTextureCoords[0][i].y;
-            vertex.TexCoords = myVector2;
-        } else {
-            vertex.TexCoords = glm::vec2(0.0f, 0.0f);
-        }
         vertices.push_back(vertex);
     }
-    for (unsigned int i = 0; i < mesh->mNumFaces; i++){
+    
+    for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
         aiFace face = mesh->mFaces[i];
+        glm::vec3 tangent = glm::vec3(0.0f);
+        glm::vec3 bitangent = glm::vec3(0.0f);
+        if (face.mNumIndices >= 3) {
+            calcTangent(vertices[face.mIndices[0]], vertices[face.mIndices[1]], vertices[face.mIndices[2]], tangent, bitangent);
+        }
         for (unsigned int j = 0; j < face.mNumIndices; j ++) {
-            indices.push_back(face.mIndices[j]);
+            int idx = face.mIndices[j];
+            indices.push_back(idx);
+            tangents[idx].push_back(tangent);
+            bitangents[idx].push_back(bitangent);
         }
     }
+//    for (unsigned int i = 0; i < vertices.size(); ++i) {
+//        int id = i;
+//        glm::vec3 avgT = glm::vec3(0.0f);
+//        glm::vec3 avgB = glm::vec3(0.0f);
+//        unsigned int size = tangents[i].size();
+//        for (unsigned int j = 0; j < size; ++j) {
+//            avgT += tangents[id][j];
+//            avgB += bitangents[id][j];
+//        }
+//        avgT /= size;
+//        avgB /= size;
+//        vertices[id].Tangent = avgT;
+//        vertices[id].Bitangent = avgB;
+//    }
+    
     if (mesh->mMaterialIndex >= 0) {
         aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
         vector<Texture> diffuseMaps = loadMaterialTextures(material,
@@ -137,12 +163,7 @@ vector<Texture> Model::loadMaterialTextures(aiMaterial *mat, aiTextureType type,
         {   // if texture hasn't been loaded already, load it
             Texture texture;
             string imgPath = directory + "/" + str.C_Str();
-            //add gamma correction to diffuse textures
-            bool gammaCorrection = false;
-            if (type == aiTextureType_DIFFUSE) {
-                gammaCorrection = true;
-            }
-            texture.id = loadTexture(imgPath.c_str(), gammaCorrection);
+            texture.id = loadTexture(imgPath.c_str());
             texture.type = typeName;
             texture.path = str.C_Str();
             textures.push_back(texture);
@@ -150,4 +171,21 @@ vector<Texture> Model::loadMaterialTextures(aiMaterial *mat, aiTextureType type,
         }
     }
     return textures;
+}
+
+void Model::calcTangent(Vertex v1, Vertex v2, Vertex v3, glm::vec3& tangent, glm::vec3& bitangent) {
+    glm::vec3 edge1 = v2.Position - v1.Position;
+    glm::vec3 edge2 = v3.Position - v1.Position;
+    glm::vec2 deltaUV1 = v2.TexCoords - v1.TexCoords;
+    glm::vec2 deltaUV2 = v3.TexCoords - v1.TexCoords;
+    float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+    tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+    tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+    tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+    tangent = glm::normalize(tangent);
+    
+    bitangent.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
+    bitangent.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
+    bitangent.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+    bitangent = glm::normalize(bitangent);
 }

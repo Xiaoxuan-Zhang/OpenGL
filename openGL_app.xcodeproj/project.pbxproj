@@ -9,7 +9,7 @@
 /* Begin PBXBuildFile section */
 		3660F4132373A00A0003F2B4 /* geometry.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3660F4112373A00A0003F2B4 /* geometry.cpp */; };
 		36668E6423829BCC004FAA8E /* world.h in Sources */ = {isa = PBXBuildFile; fileRef = 3660F414237621490003F2B4 /* world.h */; };
-		36668E6523829BCC004FAA8E /* utilities.h in Sources */ = {isa = PBXBuildFile; fileRef = 36229565237C930300127588 /* utilities.h */; };
+		369916A2238557CC00D80604 /* utilities.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 369916A0238557CC00D80604 /* utilities.cpp */; };
 		6313F8922160518300068A87 /* mesh.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6313F8882160518300068A87 /* mesh.cpp */; };
 		6313F8932160518300068A87 /* model.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6313F88A2160518300068A87 /* model.cpp */; };
 		6313F8942160518300068A87 /* ImageLoader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6313F88B2160518300068A87 /* ImageLoader.cpp */; };
@@ -21,10 +21,11 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		36229565237C930300127588 /* utilities.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = utilities.h; sourceTree = SOURCE_ROOT; };
 		3660F4112373A00A0003F2B4 /* geometry.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = geometry.cpp; path = common/geometry.cpp; sourceTree = SOURCE_ROOT; };
 		3660F4122373A00A0003F2B4 /* geometry.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = geometry.hpp; path = common/geometry.hpp; sourceTree = SOURCE_ROOT; };
 		3660F414237621490003F2B4 /* world.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = world.h; path = common/world.h; sourceTree = SOURCE_ROOT; };
+		369916A0238557CC00D80604 /* utilities.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = utilities.cpp; path = common/utilities.cpp; sourceTree = SOURCE_ROOT; };
+		369916A1238557CC00D80604 /* utilities.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = utilities.hpp; path = common/utilities.hpp; sourceTree = SOURCE_ROOT; };
 		6313F8862160518300068A87 /* ImageLoader.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = ImageLoader.hpp; path = common/ImageLoader.hpp; sourceTree = SOURCE_ROOT; };
 		6313F8872160518300068A87 /* camera.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = camera.hpp; path = common/camera.hpp; sourceTree = SOURCE_ROOT; };
 		6313F8882160518300068A87 /* mesh.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mesh.cpp; path = common/mesh.cpp; sourceTree = SOURCE_ROOT; };
@@ -76,7 +77,8 @@
 				3660F4112373A00A0003F2B4 /* geometry.cpp */,
 				3660F4122373A00A0003F2B4 /* geometry.hpp */,
 				3660F414237621490003F2B4 /* world.h */,
-				36229565237C930300127588 /* utilities.h */,
+				369916A0238557CC00D80604 /* utilities.cpp */,
+				369916A1238557CC00D80604 /* utilities.hpp */,
 			);
 			name = commom;
 			path = openGL_app;
@@ -195,11 +197,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				36668E6423829BCC004FAA8E /* world.h in Sources */,
-				36668E6523829BCC004FAA8E /* utilities.h in Sources */,
 				637FFD81234D38BA0050E256 /* scene.cpp in Sources */,
 				6313F8962160518300068A87 /* shaderProgram.cpp in Sources */,
 				3660F4132373A00A0003F2B4 /* geometry.cpp in Sources */,
 				637FFD84234D40DA0050E256 /* light.cpp in Sources */,
+				369916A2238557CC00D80604 /* utilities.cpp in Sources */,
 				6313F898216052F800068A87 /* main.cpp in Sources */,
 				6313F8922160518300068A87 /* mesh.cpp in Sources */,
 				6313F89E21605E0C00068A87 /* gui_interactions.cpp in Sources */,

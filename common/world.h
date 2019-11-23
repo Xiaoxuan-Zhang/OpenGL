@@ -10,14 +10,11 @@
 #define world_h
 
 #include <scene.hpp>
-#include <iostream>
-#include "utilities.h"
-
 
 /* PBR pipeline */
 Scene* createPBRScene(int screenWidth, int screenHeight, Camera *camera) {
     Scene* newScene = new Scene();
-    newScene->screenSize(screenWidth, screenHeight);
+    newScene->setScreenSize(screenWidth, screenHeight);
     newScene->addCamera(camera);
 
     // build and compile shaders
@@ -261,7 +258,7 @@ void renderPBRScene(Scene* scene) {
 /* reflection */
 Scene* reflectionScene(int screenWidth, int screenHeight, Camera *camera) {
     Scene* newScene = new Scene();
-    newScene->screenSize(screenWidth, screenHeight);
+    newScene->setScreenSize(screenWidth, screenHeight);
     newScene->addCamera(camera);
     camera->Position = glm::vec3(-5.0, 10.0f, 12.0f);
     // build and compile shaders
@@ -271,7 +268,6 @@ Scene* reflectionScene(int screenWidth, int screenHeight, Camera *camera) {
     newScene->shaders["nano"] = new Shader("shaders/modelShader.vs", "shaders/nanoShader.fs");
     newScene->shaders["hdr_skybox"] = new Shader("shaders/hdrSkybox.vs", "shaders/hdrSkybox.fs");
     newScene->shaders["cubemap"] = new Shader("shaders/cubemap.vs", "shaders/cubemap.fs"); //equirectangular skybox
-    newScene->shaders["hdr_skybox"] = new Shader("shaders/hdrSkybox.vs", "shaders/hdrSkybox.fs");
     
     newScene->shaders["hdr_skybox"]->use();
     newScene->shaders["hdr_skybox"]->setInt("hdrSkybox", 0);
@@ -296,8 +292,8 @@ Scene* reflectionScene(int screenWidth, int screenHeight, Camera *camera) {
     newScene->addModel("sphere", "resources/sphere.obj");
     
     // add primitives
-    Geometry* cube = newScene->addGeometry("cube0", CUBE);
-    Geometry* quad = newScene->addGeometry("quad0", QUAD);
+    newScene->addGeometry("cube0", CUBE);
+    newScene->addGeometry("quad0", QUAD);
     newScene->addGeometry("skybox", SKYBOX);
     
     // add lights
@@ -404,21 +400,26 @@ void renderReflectionScene(Scene* scene) {
  */
 Scene* shadowScene(int screenWidth, int screenHeight, Camera *camera) {
     Scene* newScene = new Scene();
-    newScene->screenSize(screenWidth, screenHeight);
+    newScene->setScreenSize(screenWidth, screenHeight);
     newScene->addCamera(camera);
     camera->Position = glm::vec3(-5.0, 5.0f, 5.0f);
     
     // build and compile shaders
-    newScene->shaders["house"] = new Shader("shaders/modelShader.vs", "shaders/houseShader.fs");
-    newScene->shaders["depthmap"] = new Shader("shaders/depthMap.vs", "shaders/depthMap.fs");
-    newScene->shaders["depthmap_vis"] = new Shader("shaders/depthMapVis.vs", "shaders/depthMapVis.fs");
+    newScene->shaders["shadow"] = new Shader("shaders/Shadows/shadowMapping.vs", "shaders/Shadows/shadowMapping.fs");
+    newScene->shaders["depthmap"] = new Shader("shaders/Shadows/depthMap.vs", "shaders/Shadows/depthMap.fs");
+    newScene->shaders["depthmap_vis"] = new Shader("shaders/Shadows/depthMapVis.vs", "shaders/Shadows/depthMapVis.fs");
+    newScene->shaders["skybox"] = new Shader("shaders/skybox.vs", "shaders/skybox.fs");
     
     newScene->shaders["depthmap_vis"]->use();
     newScene->shaders["depthmap_vis"]->setInt("depthMap", 0);
+    newScene->shaders["skybox"]->use();
+    newScene->shaders["skybox"]->setInt("skybox", 0);
     
     // load textures
+    newScene->addTexture("skybox", loadCubemap("resources/hw_nightsky/", "tga"));
     newScene->addTexture("container", loadTexture("resources/container2.png", false));
-    newScene->addTexture("wood", loadTexture("resources/wood.png", false));
+    newScene->addTexture("brick", loadTexture("resources/brickwall.jpg", false));
+    newScene->addTexture("brick_normal", loadTexture("resources/brickwall_normal.jpg", false));
     newScene->addTexture("depthmap", addNullDepthTexture(1024, 1024));
     newScene->addTexture("colormap", addNullTexture(1024, 1024));
     
@@ -427,8 +428,9 @@ Scene* shadowScene(int screenWidth, int screenHeight, Camera *camera) {
     newScene->addModel("moon", "resources/44-moon-photorealistic-2k/Moon 2K.obj");
     
     // add primitives
-    Geometry* cube = newScene->addGeometry("cube0", CUBE);
-    Geometry* quad = newScene->addGeometry("quad0", QUAD);
+    newScene->addGeometry("cube0", CUBE);
+    newScene->addGeometry("quad0", QUAD);
+    newScene->addGeometry("skybox", SKYBOX);
     
     unsigned int FBO;
     glGenFramebuffers(1, &FBO);
@@ -458,7 +460,14 @@ void renderShadowScene(Scene* scene) {
     glm::mat4 lightProjection = glm::ortho(-20.0f, 20.0f, -10.0f, 30.0f, nearPlane, farPlane);
     //    //glm::mat4 lightProjection = glm::perspective(glm::radians(90.0f), 1.0f, nearPlane, farPlane);
     glm::mat4 lightView = glm::lookAt(lightPosition, glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0f, 1.0f, 0.0f));
-    glm::mat4 model;
+    glm::mat4 cubeTransform = glm::mat4(1.0f), nanoTransform = glm::mat4(1.0f), quadTransform = glm::mat4(1.0f);
+    cubeTransform = glm::translate(cubeTransform, glm::vec3(0.0, 2.0, -2.0));
+    
+    nanoTransform = glm::translate(nanoTransform, glm::vec3(3.0, 0.0, 0.0));
+    nanoTransform = glm::scale(nanoTransform, glm::vec3(0.5, 0.5, 0.5));
+    
+    quadTransform = glm::rotate(quadTransform, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
+    quadTransform = glm::scale(quadTransform, glm::vec3(30.0, 30.0, 30.0));
     
     // first pass for depth map
     glBindFramebuffer(GL_FRAMEBUFFER, scene->FBOs["depthFBO"]);
@@ -468,21 +477,13 @@ void renderShadowScene(Scene* scene) {
     shader->use();
     shader->setMat4("lightSpaceMatrix", lightProjection * lightView);
     
-    model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(0.0, 2.0, -2.0));
-    shader->setMat4("model", model);
+    shader->setMat4("model", cubeTransform);
     scene->primitives["cube0"]->draw();
     
-    model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(3.0, 0.0, 0.0));
-    model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
-    shader->setMat4("model", model);
+    shader->setMat4("model", nanoTransform);
     scene->models["nanosuit"]->draw(shader);
     
-    model = glm::mat4(1.0f);
-    model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
-    model = glm::scale(model, glm::vec3(30.0, 30.0, 30.0));
-    shader->setMat4("model", model);
+    shader->setMat4("model", quadTransform);
     scene->primitives["quad0"]->draw();
 
     checkGLErrors();
@@ -492,7 +493,7 @@ void renderShadowScene(Scene* scene) {
     // second pass
     glViewport(0, 0, scene->screenWidth, scene->screenHeight);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    shader = scene->shaders["house"];
+    shader = scene->shaders["shadow"];
     shader->use();
     shader->setInt("depthMap", 5);
     glActiveTexture(GL_TEXTURE5);
@@ -503,39 +504,44 @@ void renderShadowScene(Scene* scene) {
     shader->setVec3("lightPos", lightPosition);
     shader->setMat4("lightSpaceMatrix", lightProjection * lightView);
     
-    model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(0.0, 2.0, -2.0));
-    shader->setMat4("model", model);
+    shader->setMat4("model", cubeTransform);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, scene->textures["container"]);
     scene->primitives["cube0"]->draw();
     
-    model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(3.0, 0.0, 0.0));
-    model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
-    shader->setMat4("model", model);
+    shader->setMat4("model", nanoTransform);
     scene->models["nanosuit"]->draw(shader);
     
-    model = glm::mat4(1.0f);
-    model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
-    model = glm::scale(model, glm::vec3(30.0, 30.0, 30.0));
-    shader->setMat4("model", model);
+    shader->setMat4("model", quadTransform);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, scene->textures["wood"]);
+    glBindTexture(GL_TEXTURE_2D, scene->textures["brick"]);
     scene->primitives["quad0"]->draw();
+    
+    //skybox
+    glDepthFunc(GL_LEQUAL);
+    Shader* skyShader = scene->shaders["skybox"];
+    skyShader->use();
+    skyShader->setMat4("view", view);
+    skyShader->setMat4("projection", projection);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, scene->textures["skybox"]);
+    scene->primitives["skybox"]->draw();
+    glDepthFunc(GL_LESS);
+    
 }
-/* complex scene */
+
+/* complex scene with shadow for single light */
 Scene* complexScene(int screenWidth, int screenHeight, Camera *camera) {
     Scene* newScene = new Scene();
-    newScene->screenSize(screenWidth, screenHeight);
+    newScene->setScreenSize(screenWidth, screenHeight);
     newScene->addCamera(camera);
-    camera->Position = glm::vec3(3.0f, 4.0f, -10.0f);
+    camera->Position = glm::vec3(3.0f, 4.0f, 10.0f);
     
     // build and compile shaders
     newScene->shaders["skybox"] = new Shader("shaders/skybox.vs", "shaders/skybox.fs");
-    newScene->shaders["house"] = new Shader("shaders/modelShader.vs", "shaders/houseShader.fs");
-    newScene->shaders["depthmap"] = new Shader("shaders/depthMap.vs", "shaders/depthMap.fs");
-    newScene->shaders["depthmap_vis"] = new Shader("shaders/depthMapVis.vs", "shaders/depthMapVis.fs");
+    newScene->shaders["house"] = new Shader("shaders/Shadows/shadowMapping.vs", "shaders/Shadows/shadowMapping.fs");
+    newScene->shaders["depthmap"] = new Shader("shaders/Shadows/depthMap.vs", "shaders/Shadows/depthMap.fs");
+    newScene->shaders["depthmap_vis"] = new Shader("shaders/Shadows/depthMapVis.vs", "shaders/Shadows/depthMapVis.fs");
     
     newScene->shaders["skybox"]->use();
     newScene->shaders["skybox"]->setInt("skybox", 0);
@@ -553,8 +559,8 @@ Scene* complexScene(int screenWidth, int screenHeight, Camera *camera) {
     newScene->addModel("nanosuit", "resources/nanosuit/nanosuit.obj");
     
     // add primitives
-    Geometry* cube = newScene->addGeometry("cube0", CUBE);
-    Geometry* quad = newScene->addGeometry("quad0", QUAD);
+    newScene->addGeometry("cube", CUBE);
+    newScene->addGeometry("quad", QUAD);
     newScene->addGeometry("skybox", SKYBOX);
     
     unsigned int FBO;
@@ -562,10 +568,8 @@ Scene* complexScene(int screenWidth, int screenHeight, Camera *camera) {
     glBindFramebuffer(GL_FRAMEBUFFER, FBO);
     newScene->FBOs["depthFBO"] = FBO;
     //attach depth texture to this framebuffer's depth buffer
-    //glBindTexture(GL_TEXTURE_2D, newScene->textures["colormap"]);
     glBindTexture(GL_TEXTURE_2D, newScene->textures["depthmap"]);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, newScene->textures["depthmap"], 0);
-    //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, newScene->textures["colormap"], 0);
     //since only depth info for this texture, we explicitly tell OpenGL we don't need to draw color buffer
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
@@ -585,9 +589,15 @@ void renderComplexScene(Scene* scene) {
     glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, nearPlane, farPlane);
     //glm::mat4 lightProjection = glm::perspective(glm::radians(90.0f), 1.0f, nearPlane, farPlane);
     glm::mat4 lightView = glm::lookAt(lightPosition, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    glm::mat4 model;
     
-    // first pass for depth map
+    glm::mat4 buildingTransform = glm::mat4(1.0f), nanoTransform = glm::mat4(1.0f);
+    buildingTransform = glm::scale(buildingTransform, glm::vec3(2.0, 2.0, 2.0));
+    
+    nanoTransform = glm::translate(nanoTransform, glm::vec3(0.0, 0.1, 0.0));
+    nanoTransform = glm::rotate(nanoTransform, glm::radians(-45.0f), glm::vec3(0.0, 1.0, 0.0));
+    nanoTransform = glm::scale(nanoTransform, glm::vec3(0.2, 0.2, 0.2));
+    
+    // first pass for shadow map
     glViewport(0, 0, 1024, 1024);
     glBindFramebuffer(GL_FRAMEBUFFER, scene->FBOs["depthFBO"]);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -595,16 +605,10 @@ void renderComplexScene(Scene* scene) {
     shader->use();
     shader->setMat4("lightSpaceMatrix", lightProjection * lightView);
     
-    model = glm::mat4(1.0f);
-    model = glm::scale(model, glm::vec3(2.0, 2.0, 2.0));
-    shader->setMat4("model", model);
+    shader->setMat4("model", buildingTransform);
     scene->models["building"]->draw(shader);
     
-    model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(0.0, 0.1, 0.0));
-    model = glm::rotate(model, glm::radians(-45.0f), glm::vec3(0.0, 1.0, 0.0));
-    model = glm::scale(model, glm::vec3(0.2, 0.2, 0.2));
-    shader->setMat4("model", model);
+    shader->setMat4("model", nanoTransform);
     scene->models["nanosuit"]->draw(shader);
     
     checkGLErrors();
@@ -625,16 +629,10 @@ void renderComplexScene(Scene* scene) {
     shader->setVec3("lightPos", lightPosition);
     shader->setMat4("lightSpaceMatrix", lightProjection * lightView);
 
-    model = glm::mat4(1.0f);
-    model = glm::scale(model, glm::vec3(2.0, 2.0, 2.0));
-    shader->setMat4("model", model);
+    shader->setMat4("model", buildingTransform);
     scene->models["building"]->draw(shader);
-
-    model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(0.0, 0.1, 0.0));
-    model = glm::rotate(model, glm::radians(-45.0f), glm::vec3(0.0, 1.0, 0.0));
-    model = glm::scale(model, glm::vec3(0.2, 0.2, 0.2));
-    shader->setMat4("model", model);
+    
+    shader->setMat4("model", nanoTransform);
     scene->models["nanosuit"]->draw(shader);
 
     //skybox
@@ -656,7 +654,161 @@ void renderComplexScene(Scene* scene) {
 //    quadShader->setFloat("far_plane", farPlane);
 //    glActiveTexture(GL_TEXTURE0);
 //    glBindTexture(GL_TEXTURE_2D, scene->textures["depthmap"]);
-//    scene->primitives["quad0"]->draw();
+//    scene->primitives["quad"]->draw();
+}
+
+/*deferred lighting with multiple lights*/
+Scene* deferredScene(int screenWidth, int screenHeight, Camera *camera) {
+    Scene* newScene = new Scene();
+    newScene->setScreenSize(screenWidth, screenHeight);
+    newScene->addCamera(camera);
+    camera->Position = glm::vec3(3.0f, 4.0f, 10.0f);
+    
+    // build and compile shaders
+    newScene->shaders["GBuffer"] = new Shader("shaders/DeferredLighting/GBuffer.vs", "shaders/DeferredLighting/GBuffer.fs");
+    newScene->shaders["GBuffer_normal"] = new Shader("shaders/DeferredLighting/GBuffer_normal.vs", "shaders/DeferredLighting/GBuffer.fs");
+    newScene->shaders["lighting"] = new Shader("shaders/DeferredLighting/deferredLighting.vs", "shaders/DeferredLighting/deferredLighting.fs");
+    newScene->shaders["lights"] = new Shader("shaders/DeferredLighting/lights.vs", "shaders/DeferredLighting/lights.fs");
+    newScene->shaders["skybox"] = new Shader("shaders/skybox.vs", "shaders/skybox.fs");
+    
+    newScene->shaders["skybox"]->use();
+    newScene->shaders["skybox"]->setInt("skybox", 0);
+    
+    newScene->shaders["lighting"]->use();
+    newScene->shaders["lighting"]->setInt("texure_gPosition", 0);
+    newScene->shaders["lighting"]->setInt("texure_gNormal", 1);
+    newScene->shaders["lighting"]->setInt("texture_gAlbedoSpec", 2);
+    
+    // load textures
+    newScene->addTexture("skybox", loadCubemap("resources/hw_nightsky/", "tga"));
+    
+    // load models
+    newScene->addModel("building", "resources/building/Street environment_V01.obj");
+    newScene->addModel("nanosuit", "resources/nanosuit/nanosuit.obj");
+    newScene->addModel("sphere", "resources/sphere.obj");
+    
+    // add primitives
+    newScene->addGeometry("cube", CUBE);
+    newScene->addGeometry("quad", QUAD);
+    newScene->addGeometry("skybox", SKYBOX);
+    
+    newScene->addGBuffer();
+    
+    for (int i = 0; i < 32; ++i) {
+        float x = randomFloat() * 2.0 - 1.0;
+        float y = randomFloat();
+        float z = randomFloat() * 2.0 - 1.0;
+        newScene->addLight(POINT_LIGHT, glm::vec3(x * 10.0, y * 3.0, z * 10.0), glm::vec3(randomFloat() + 0.5, randomFloat() + 0.5, randomFloat() + 0.5));
+    }
+    
+    checkGLErrors();
+    return newScene;
+}
+
+void renderDeferredScene(Scene* scene) {
+    Camera* cam = scene->camera;
+    float nearPlane = 0.1f;
+    float farPlane = 100.0f;
+    glm::mat4 view = cam->GetViewMatrix();
+    glm::mat4 projection = glm::perspective(glm::radians(cam->Zoom), (float)scene->screenWidth/ (float)scene->screenHeight, nearPlane, farPlane);
+    
+    glm::mat4 buildingTransform = glm::mat4(1.0f);
+    buildingTransform = glm::scale(buildingTransform, glm::vec3(2.0, 2.0, 2.0));
+    vector<glm::mat4> nanoMatrix;
+    for (int i = 0; i < 5; ++i) {
+        for (int j = 0; j < 5; ++j) {
+            glm::mat4 model = glm::mat4(1.0);
+            model = glm::translate(model, glm::vec3(3.0 * i, 0.1, 3.0 * j));
+            model = glm::rotate(model, glm::radians(-15.0f * i + 5.0f * j), glm::vec3(0.0, 1.0, 0.0));
+            model = glm::scale(model, glm::vec3(0.2, 0.2, 0.2));
+            nanoMatrix.push_back(model);
+        }
+    }
+    
+    // first pass for G buffer
+    glViewport(0, 0, scene->screenWidth, scene->screenHeight);
+    glBindFramebuffer(GL_FRAMEBUFFER, scene->getGBuffer());
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    Shader* shader = scene->shaders["GBuffer"];
+    shader->use();
+    shader->setMat4("projection", projection);
+    shader->setMat4("view", view);
+
+    shader->setMat4("model", buildingTransform);
+    scene->models["building"]->draw(shader);
+
+    shader = scene->shaders["GBuffer_normal"];
+    shader->use();
+    shader->setMat4("projection", projection);
+    shader->setMat4("view", view);
+    
+    for (int i = 0; i < nanoMatrix.size(); ++i) {
+        shader->setMat4("model", nanoMatrix[i]);
+        scene->models["nanosuit"]->draw(shader);
+    }
+
+    checkGLErrors();
+    checkFramebufferStatus();
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    
+//    //skybox
+//    glDepthFunc(GL_LEQUAL);
+//    Shader* skyShader = scene->shaders["skybox"];
+//    skyShader->use();
+//    skyShader->setMat4("view", view);
+//    skyShader->setMat4("projection", projection);
+//    glActiveTexture(GL_TEXTURE0);
+//    glBindTexture(GL_TEXTURE_CUBE_MAP, scene->textures["skybox"]);
+//    scene->primitives["skybox"]->draw();
+//    glDepthFunc(GL_LESS);
+    
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    Shader* quadShader = scene->shaders["lighting"];
+    quadShader->use();
+    quadShader->setVec3("cameraPos", cam->Position);
+
+    for (int i = 0; i < 32; ++i) {
+        quadShader->setVec3(("lights[" + std::to_string(i) + "].lightPos").c_str(), scene->lights[i]->lightPos);
+        quadShader->setVec3(("lights[" + std::to_string(i) + "].lightColor").c_str(), scene->lights[i]->lightColor);
+        quadShader->setFloat(("lights[" + std::to_string(i) + "].linear").c_str(), 0.7);
+        quadShader->setFloat(("lights[" + std::to_string(i) + "].quadratic").c_str(), 1.8);
+    }
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, scene->textures["G_position"]);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, scene->textures["G_normal"]);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, scene->textures["G_albedo_specular"]);
+    scene->primitives["quad"]->draw();
+    checkGLErrors();
+    checkFramebufferStatus();
+    
+    // copy depth buffer to default framebuffer's depth buffer
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, scene->getGBuffer());
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // write to default framebuffer
+    // blit to default framebuffer. Note that this may or may not work as the internal formats of both the FBO and default framebuffer have to match.
+    // the internal formats are implementation defined. This works on all of my systems, but if it doesn't on yours you'll likely have to write to the
+    // depth buffer in another shader stage (or somehow see to match the default framebuffer's internal format with the FBO's internal format).
+    glBlitFramebuffer(0, 0, scene->screenWidth, scene->screenHeight, 0, 0, scene->screenWidth, scene->screenHeight, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    
+    // render lights
+    Shader* lightShader = scene->shaders["lights"];
+    lightShader->use();
+    lightShader->setMat4("projection", projection);
+    lightShader->setMat4("view", view);
+
+    glm::mat4 lightModel;
+    for (int i = 0; i < 32; ++i) {
+        lightModel = glm::mat4(1.0f);
+        lightModel = glm::translate(lightModel, scene->lights[i]->lightPos);
+        lightModel = glm::scale(lightModel, glm::vec3(0.2, 0.2, 0.2));
+        lightShader->setMat4("model", lightModel);
+        lightShader->setVec3("lightColor", scene->lights[i]->lightColor);
+        scene->models["sphere"]->draw(lightShader);
+    }
+    
 }
 
 #endif /* world_h */

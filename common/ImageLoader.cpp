@@ -87,7 +87,7 @@ GLuint loadTexture(const char * imagePath, bool gammaCorrection) {
     unsigned char *data = stbi_load(imagePath, &width, &height, &nrChannels, 0);
     
     GLint format;
-    GLint internalFormat;
+    GLint internalFormat = GL_RGB;
     if (nrChannels == 1)
     {
         internalFormat = format = GL_RED;

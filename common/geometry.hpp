@@ -19,18 +19,10 @@
 #endif /* geometry_hpp */
 using namespace std;
 
-enum PrimitiveType {
-    CUBE = 0,
-    QUAD = 1,
-    SPHERE = 2,
-    SKYBOX
-};
-
 class Geometry {
 public:
     Geometry() {};
     virtual ~Geometry() {};
-    
     virtual void draw();
     
 protected:
@@ -64,11 +56,21 @@ class Sphere : public Geometry {
 public:
     Sphere();
     ~Sphere() {};
-    
     void draw();
     
     vector<glm::vec3> positions;
     vector<glm::vec3> normals;
     vector<glm::vec2> uvs;
     vector<int> indices;
+};
+
+class RenderObject : public Geometry {
+public:
+    RenderObject(Geometry* geo) : geometry(geo) {};
+    void setTransform(glm::mat4 trans);
+    void render();
+    
+protected:
+    Geometry* geometry;
+    glm::mat4 transformMatrix;
 };

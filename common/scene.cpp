@@ -34,7 +34,7 @@ Scene::~Scene() {
     }
 };
 
-void Scene::screenSize(unsigned int width, unsigned height) {
+void Scene::setScreenSize(unsigned int width, unsigned height) {
     this->screenWidth = width;
     this->screenHeight = height;
 };
@@ -63,7 +63,7 @@ Model* Scene::addModel(string name, string filePath) {
 
 void Scene::addLight(LightType type, const glm::vec3& pos, const glm::vec3& color) {
 //     lighting info
-    int lightId = this->lights.size() - 1;
+    int lightId = this->lights.size();
     this->lights.push_back(new Light(lightId, type, pos, color));
 };
 
@@ -71,54 +71,42 @@ void Scene::addTexture(string name, GLuint id) {
     this->textures[name] = id;
 };
 
-void Scene::configFrameBuffers() {
-    // configure (floating point) framebuffers
-    // ---------------------------------------
-    glGenFramebuffers(1, &this->hdrFBO);
-    glBindFramebuffer(GL_FRAMEBUFFER, this->hdrFBO);
-    // create 2 floating point color buffers (1 for normal rendering, other for brightness treshold values)
-    glGenTextures(2, this->colorBuffers);
-    for (unsigned int i = 0; i < 2; i++)
-    {
-        glBindTexture(GL_TEXTURE_2D, this->colorBuffers[i]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, this->screenWidth, this->screenHeight, 0, GL_RGB, GL_FLOAT, NULL);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);  // we clamp to the edge as the blur filter would otherwise sample repeated texture values!
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        // attach texture to framebuffer
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, this->colorBuffers[i], 0);
-    }
+unsigned int Scene::getGBuffer() {
+    return this->FBOs["GBuffer"];
+}
+
+void Scene::addGBuffer() {
+    unsigned int FBO;
+    glGenFramebuffers(1, &FBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+
+    unsigned int bufferAttachments[3] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2};
+    unsigned int posTex = addNullTexture(this->screenWidth, this->screenHeight, GL_RGB16F, GL_RGB, GL_FLOAT, GL_NEAREST, GL_REPEAT);
+    unsigned int norTex = addNullTexture(this->screenWidth, this->screenHeight, GL_RGB16F, GL_RGB, GL_FLOAT, GL_NEAREST, GL_REPEAT);
+    unsigned int colTex = addNullTexture(this->screenWidth, this->screenHeight, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, GL_NEAREST, GL_REPEAT);
+    
+    this->addTexture("G_position", posTex);
+    this->addTexture("G_normal", norTex);
+    this->addTexture("G_albedo_specular", colTex);
+
+    glBindTexture(GL_TEXTURE_2D, posTex);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, bufferAttachments[0], GL_TEXTURE_2D, posTex, 0);
+    glBindTexture(GL_TEXTURE_2D, norTex);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, bufferAttachments[1], GL_TEXTURE_2D, norTex, 0);
+    glBindTexture(GL_TEXTURE_2D, colTex);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, bufferAttachments[2], GL_TEXTURE_2D, colTex, 0);
+    glDrawBuffers(3, bufferAttachments);
     // create and attach depth buffer (renderbuffer)
-    glGenRenderbuffers(1, &this->rboDepth);
-    glBindRenderbuffer(GL_RENDERBUFFER, this->rboDepth);
+    unsigned int rboDepth;
+    glGenRenderbuffers(1, &rboDepth);
+    glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, this->screenWidth, this->screenHeight);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, this->rboDepth);
-    
-    // tell OpenGL which color attachments we'll use (of this framebuffer) for rendering
-    glDrawBuffers(2, this->attachments);
-    // finally check if framebuffer is complete
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        printf("Framebuffer not complete!");
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
+
+    this->FBOs["GBuffer"] = FBO;
+    checkFramebufferStatus();
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    
-    // ping-pong-framebuffer for blurring
-    glGenFramebuffers(2, this->pingpongFBO);
-    glGenTextures(2, this->pingpongColorbuffers);
-    for (unsigned int i = 0; i < 2; i++)
-    {
-        glBindFramebuffer(GL_FRAMEBUFFER, this->pingpongFBO[i]);
-        glBindTexture(GL_TEXTURE_2D, this->pingpongColorbuffers[i]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, this->screenWidth, this->screenHeight, 0, GL_RGB, GL_FLOAT, NULL);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // we clamp to the edge as the blur filter would otherwise sample repeated texture values!
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, this->pingpongColorbuffers[i], 0);
-        // also check if framebuffers are complete (no need for depth buffer)
-        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-            printf("Framebuffer not complete!");
-    }
-};
+}
+
 
 

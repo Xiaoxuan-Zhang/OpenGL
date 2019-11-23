@@ -1,17 +1,12 @@
 //
-//  utilities.h
+//  utilities.cpp
 //  openGL_app
 //
-//  Created by Zooey Zhang on 11/13/19.
+//  Created by Zooey Zhang on 11/20/19.
 //  Copyright © 2019 Zooey Zhang. All rights reserved.
 //
 
-#ifndef utilities_h
-#define utilities_h
-
-#include <glm/glm.hpp> //3D Math library
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#include "utilities.hpp"
 
 void checkGLErrors() {
     GLenum err = glGetError();
@@ -64,7 +59,7 @@ unsigned int addNullHdrCubemapMipmap(unsigned int width, unsigned int height) {
     return cubeMipmap;
 }
 
-unsigned int addNullTexture(unsigned int width, unsigned int height, GLuint internalFormat = GL_RGB, GLenum format = GL_RGB, GLenum dataType = GL_FLOAT, GLenum filter = GL_LINEAR, GLenum wrap = GL_CLAMP_TO_EDGE) {
+unsigned int addNullTexture(unsigned int width, unsigned int height, GLuint internalFormat, GLenum format, GLenum dataType, GLenum filter, GLenum wrap) {
     unsigned int nullTexture;
     glGenTextures(1, &nullTexture);
     glBindTexture(GL_TEXTURE_2D, nullTexture);
@@ -91,4 +86,6 @@ unsigned int addNullDepthTexture(unsigned int width, unsigned int height) {
     return depthMap;
 }
 
-#endif /* utilities_h */
+float randomFloat() {
+    return (float)(rand()) / RAND_MAX;
+}

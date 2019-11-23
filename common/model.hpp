@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <string>
 #include <vector>
+#include <unordered_map>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -36,7 +37,7 @@ private:
     Mesh processMesh(aiMesh* mesh, const aiScene* scene);
     vector<Texture> loadMaterialTextures(aiMaterial* mat, aiTextureType type,
                                          string typeName);
-    
+    void calcTangent(Vertex v1, Vertex v2, Vertex v3, glm::vec3& tangent, glm::vec3& bitangent);
 };
 
 #endif /* model_hpp */
