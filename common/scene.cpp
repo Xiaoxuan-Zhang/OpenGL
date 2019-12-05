@@ -83,12 +83,12 @@ void Scene::addGBuffer() {
     unsigned int bufferAttachments[3] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2};
     unsigned int posTex = addNullTexture(this->screenWidth, this->screenHeight, GL_RGB16F, GL_RGB, GL_FLOAT, GL_NEAREST, GL_REPEAT);
     unsigned int norTex = addNullTexture(this->screenWidth, this->screenHeight, GL_RGB16F, GL_RGB, GL_FLOAT, GL_NEAREST, GL_REPEAT);
-    unsigned int colTex = addNullTexture(this->screenWidth, this->screenHeight, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, GL_NEAREST, GL_REPEAT);
+    unsigned int colTex = addNullTexture(this->screenWidth, this->screenHeight, GL_RGBA16F, GL_RGBA, GL_UNSIGNED_BYTE, GL_NEAREST, GL_REPEAT);
     
     this->addTexture("G_position", posTex);
     this->addTexture("G_normal", norTex);
     this->addTexture("G_albedo_specular", colTex);
-
+    
     glBindTexture(GL_TEXTURE_2D, posTex);
     glFramebufferTexture2D(GL_FRAMEBUFFER, bufferAttachments[0], GL_TEXTURE_2D, posTex, 0);
     glBindTexture(GL_TEXTURE_2D, norTex);
@@ -104,6 +104,30 @@ void Scene::addGBuffer() {
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
 
     this->FBOs["GBuffer"] = FBO;
+    checkFramebufferStatus();
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void Scene::addPingpongBuffer() {
+    unsigned int pingpongFBO[2];
+    unsigned int pingpongBuffer[2];
+    glGenFramebuffers(2, pingpongFBO);
+    glGenTextures(2, pingpongBuffer);
+    for (unsigned int i = 0; i < 2; i++)
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[i]);
+        glBindTexture(GL_TEXTURE_2D, pingpongBuffer[i]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, this->screenWidth, this->screenHeight, 0, GL_RGB, GL_FLOAT, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pingpongBuffer[i], 0);
+    }
+    this->FBOs["pingpong0"] = pingpongFBO[0];
+    this->FBOs["pingpong1"] = pingpongFBO[1];
+    this->textures["pingpong0"] = pingpongBuffer[0];
+    this->textures["pingpong1"] = pingpongBuffer[1];
     checkFramebufferStatus();
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

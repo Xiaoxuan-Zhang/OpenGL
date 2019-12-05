@@ -56,6 +56,7 @@ public:
     void addTexture(string name, GLuint id);
     void addGBuffer();
     unsigned int getGBuffer();
+    void addPingpongBuffer();
     
     Geometry* addGeometry(string name, PrimitiveType type);
     Model* addModel(string name, string filePath);

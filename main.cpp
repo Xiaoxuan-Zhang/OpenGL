@@ -87,8 +87,8 @@ int main()
     //Scene* newScene = createPBRScene(SCR_WIDTH, SCR_HEIGHT, &camera);
     //Scene* newScene = reflectionScene(SCR_WIDTH, SCR_HEIGHT, &camera);
     //Scene* newScene = shadowScene(SCR_WIDTH, SCR_HEIGHT, &camera);
-    Scene* newScene = complexScene(SCR_WIDTH, SCR_HEIGHT, &camera);
-    //Scene* newScene = deferredScene(SCR_WIDTH, SCR_HEIGHT, &camera);
+    //Scene* newScene = complexScene(SCR_WIDTH, SCR_HEIGHT, &camera);
+    Scene* newScene = deferredScene(SCR_WIDTH, SCR_HEIGHT, &camera);
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
@@ -106,8 +106,8 @@ int main()
         //renderPBRScene(newScene);
         //renderReflectionScene(newScene);
         //renderShadowScene(newScene);
-        renderComplexScene(newScene);
-        //renderDeferredScene(newScene);
+        //renderComplexScene(newScene);
+        renderDeferredScene(newScene);
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);

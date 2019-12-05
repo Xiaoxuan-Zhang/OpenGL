@@ -1,4 +1,8 @@
 #version 330 core
+#define GAMMA 2.2
+#define EXPOSURE 1.0
+#define ATT_LINEAR 0.2
+#define ATT_QUADRATIC 0.5
 
 struct Material
 {
@@ -54,7 +58,7 @@ void main()
 {
     //diffuse
     vec3 diffuseTex = texture(material.texture_diffuse1, fs_in.TexCoords).rgb;
-    vec3 lightCol = vec3(1.0);
+    vec3 lightCol = vec3(30.0);
     
     vec3 nor = normalize(fs_in.Normal);
     vec3 viewDir = normalize(cameraPos - fs_in.Position);
@@ -62,16 +66,24 @@ void main()
     vec3 halfDir = normalize(lightDir + viewDir);
     
     float diff = max(dot(lightDir, nor), 0.0);
-    vec3 diffCol = diff * lightCol;
+    vec3 diffCol = diff * diffuseTex * lightCol;
     
-    float specular = pow(max(dot(halfDir, nor), 0.0), 32.0);
-    vec3 specCol = specular * lightCol;
+    float specular = pow(max(dot(halfDir, nor), 0.0), 16.0);
+    vec3 specCol = specular * diffuseTex * lightCol;
     
     float bias = max(0.05 * (1.0 - dot(nor, lightDir)), 0.005);
     float sd = calcShadow(bias);
     float ambient = 0.05;
-    vec3 col = ambient + ((1.0 - sd) * (diffCol + specCol)) * diffuseTex;
+    
+    float dist = length(lightPos - fs_in.Position);
+    float att = 1.0 / (1.0 + ATT_LINEAR * dist + ATT_QUADRATIC * dist * dist);
+    
+    vec3 col = ambient * diffuseTex + ((1.0 - sd) * (diffCol + specCol) * att);
+    
+    // tone mapping
+    vec3 rst = vec3(1.0) - exp(-col * EXPOSURE);
+    
     //gamma correction
-    //col = pow(col, vec3(1.0/2.2));
+    col = pow(col, vec3(1.0/GAMMA));
     FragColor = vec4(col, 1.0);
 }

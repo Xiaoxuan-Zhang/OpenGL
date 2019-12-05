@@ -260,7 +260,7 @@ Scene* reflectionScene(int screenWidth, int screenHeight, Camera *camera) {
     Scene* newScene = new Scene();
     newScene->setScreenSize(screenWidth, screenHeight);
     newScene->addCamera(camera);
-    camera->Position = glm::vec3(-5.0, 10.0f, 12.0f);
+    camera->Position = glm::vec3(-8.0, 10.0f, 12.0f);
     // build and compile shaders
     newScene->shaders["skybox"] = new Shader("shaders/skybox.vs", "shaders/skybox.fs");
     newScene->shaders["simple_texture"] = new Shader("shaders/simpleTexture.vs", "shaders/simpleTexture.fs");
@@ -355,7 +355,7 @@ void renderReflectionScene(Scene* scene) {
     
     Shader* shader = scene->shaders["nano"];
     model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(-5.0f, -2.0f, 0.0));
+    model = glm::translate(model, glm::vec3(-1.0f, -2.0f, 0.0));
     model = glm::rotate(model, glm::radians(-45.0f), glm::vec3(0.0f, 1.0f, 0.0));
     shader->use();
     shader->setMat4("model", model);
@@ -367,19 +367,19 @@ void renderReflectionScene(Scene* scene) {
     glBindTexture(GL_TEXTURE_CUBE_MAP, scene->textures["env_cubemap"]);
     scene->models["nanosuit"]->draw(shader);
     
-    shader = scene->shaders["envmap"];
-    model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(5.0f, 10.0f, 0.0));
-    model = glm::rotate(model, glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0));
-    model = glm::scale(model, glm::vec3(2.0f, 2.0f, 2.0));
-    shader->use();
-    shader->setMat4("model", model);
-    shader->setMat4("view", view);
-    shader->setMat4("projection", projection);
-    shader->setVec3("cameraPos", cam->Position);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, scene->textures["env_cubemap"]);
-    scene->primitives["cube0"]->draw();
+//    shader = scene->shaders["envmap"];
+//    model = glm::mat4(1.0f);
+//    model = glm::translate(model, glm::vec3(-5.0f, 5.0f, 0.0));
+//    model = glm::rotate(model, glm::radians(30.0f), glm::vec3(0.0f, 0.0f, 1.0));
+//    model = glm::scale(model, glm::vec3(2.0f, 2.0f, 2.0));
+//    shader->use();
+//    shader->setMat4("model", model);
+//    shader->setMat4("view", view);
+//    shader->setMat4("projection", projection);
+//    shader->setVec3("cameraPos", cam->Position);
+//    glActiveTexture(GL_TEXTURE0);
+//    glBindTexture(GL_TEXTURE_CUBE_MAP, scene->textures["env_cubemap"]);
+//    scene->primitives["cube0"]->draw();
     
     //skybox
     Shader* skyShader = scene->shaders["hdr_skybox"];
@@ -417,8 +417,8 @@ Scene* shadowScene(int screenWidth, int screenHeight, Camera *camera) {
     
     // load textures
     newScene->addTexture("skybox", loadCubemap("resources/hw_nightsky/", "tga"));
-    newScene->addTexture("container", loadTexture("resources/container2.png", false));
-    newScene->addTexture("brick", loadTexture("resources/brickwall.jpg", false));
+    newScene->addTexture("container", loadTexture("resources/container2.png", true));
+    newScene->addTexture("brick", loadTexture("resources/brickwall.jpg", true));
     newScene->addTexture("brick_normal", loadTexture("resources/brickwall_normal.jpg", false));
     newScene->addTexture("depthmap", addNullDepthTexture(1024, 1024));
     newScene->addTexture("colormap", addNullTexture(1024, 1024));
@@ -551,7 +551,6 @@ Scene* complexScene(int screenWidth, int screenHeight, Camera *camera) {
     // load textures
     newScene->addTexture("skybox", loadCubemap("resources/hw_nightsky/", "tga"));
     newScene->addTexture("depthmap", addNullDepthTexture(1024, 1024));
-    newScene->addTexture("colormap", addNullTexture(1024, 1024));
     newScene->addTexture("wood", loadTexture("resources/wood.png", true));
     
     // load models
@@ -670,6 +669,8 @@ Scene* deferredScene(int screenWidth, int screenHeight, Camera *camera) {
     newScene->shaders["lighting"] = new Shader("shaders/DeferredLighting/deferredLighting.vs", "shaders/DeferredLighting/deferredLighting.fs");
     newScene->shaders["lights"] = new Shader("shaders/DeferredLighting/lights.vs", "shaders/DeferredLighting/lights.fs");
     newScene->shaders["skybox"] = new Shader("shaders/skybox.vs", "shaders/skybox.fs");
+    newScene->shaders["blur"] = new Shader("shaders/DeferredLighting/Bloom_final.vs", "shaders/DeferredLighting/Bloom_blur.fs");
+    newScene->shaders["bloom"] = new Shader("shaders/DeferredLighting/Bloom_final.vs", "shaders/DeferredLighting/Bloom_final.fs");
     
     newScene->shaders["skybox"]->use();
     newScene->shaders["skybox"]->setInt("skybox", 0);
@@ -685,21 +686,43 @@ Scene* deferredScene(int screenWidth, int screenHeight, Camera *camera) {
     // load models
     newScene->addModel("building", "resources/building/Street environment_V01.obj");
     newScene->addModel("nanosuit", "resources/nanosuit/nanosuit.obj");
-    newScene->addModel("sphere", "resources/sphere.obj");
+    newScene->addModel("sphere", "resources/sphere_lowpoly.obj");
     
     // add primitives
     newScene->addGeometry("cube", CUBE);
     newScene->addGeometry("quad", QUAD);
     newScene->addGeometry("skybox", SKYBOX);
     
+    // add random lights
+    for (int i = 0; i < 32; ++i) {
+        float x = randomFloat();
+        float y = randomFloat();
+        float z = randomFloat();
+        newScene->addLight(POINT_LIGHT, glm::vec3(x * 15.0, y * 3.0, z * 15.0 - 5.0), glm::vec3(2.5 + randomFloat() * 2.5, 2.5 + randomFloat() * 2.5, 2.5 + randomFloat() * 2.5));
+    }
+    
+    // add HDR color buffer and brightness buffer
+    newScene->addTexture("hdr_color", addNullTexture(screenWidth, screenHeight, GL_RGB16F, GL_RGB, GL_FLOAT));
+    newScene->addTexture("hdr_bright", addNullTexture(screenWidth, screenHeight, GL_RGB16F, GL_RGB, GL_FLOAT));
+    
+    unsigned int bufferAttachments[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
+    unsigned int hdrFBO;
+    glGenFramebuffers(1, &hdrFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
+    newScene->FBOs["hdr"] = hdrFBO;
+    glBindTexture(GL_TEXTURE_2D, newScene->textures["hdr_color"]);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, bufferAttachments[0], GL_TEXTURE_2D, newScene->textures["hdr_color"], 0);
+    
+    glBindTexture(GL_TEXTURE_2D, newScene->textures["hdr_bright"]);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, bufferAttachments[1], GL_TEXTURE_2D, newScene->textures["hdr_bright"], 0);
+    glDrawBuffers(2, bufferAttachments);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    
+    // add G buffer for deferred lighting
     newScene->addGBuffer();
     
-    for (int i = 0; i < 32; ++i) {
-        float x = randomFloat() * 2.0 - 1.0;
-        float y = randomFloat();
-        float z = randomFloat() * 2.0 - 1.0;
-        newScene->addLight(POINT_LIGHT, glm::vec3(x * 10.0, y * 3.0, z * 10.0), glm::vec3(randomFloat() + 0.5, randomFloat() + 0.5, randomFloat() + 0.5));
-    }
+    // add pingpong buffers for blur effect
+    newScene->addPingpongBuffer();
     
     checkGLErrors();
     return newScene;
@@ -751,17 +774,9 @@ void renderDeferredScene(Scene* scene) {
     checkFramebufferStatus();
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     
-//    //skybox
-//    glDepthFunc(GL_LEQUAL);
-//    Shader* skyShader = scene->shaders["skybox"];
-//    skyShader->use();
-//    skyShader->setMat4("view", view);
-//    skyShader->setMat4("projection", projection);
-//    glActiveTexture(GL_TEXTURE0);
-//    glBindTexture(GL_TEXTURE_CUBE_MAP, scene->textures["skybox"]);
-//    scene->primitives["skybox"]->draw();
-//    glDepthFunc(GL_LESS);
-    
+    // second pass for color and bright buffer
+    //glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, scene->FBOs["hdr"]);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     Shader* quadShader = scene->shaders["lighting"];
     quadShader->use();
@@ -770,8 +785,8 @@ void renderDeferredScene(Scene* scene) {
     for (int i = 0; i < 32; ++i) {
         quadShader->setVec3(("lights[" + std::to_string(i) + "].lightPos").c_str(), scene->lights[i]->lightPos);
         quadShader->setVec3(("lights[" + std::to_string(i) + "].lightColor").c_str(), scene->lights[i]->lightColor);
-        quadShader->setFloat(("lights[" + std::to_string(i) + "].linear").c_str(), 0.7);
-        quadShader->setFloat(("lights[" + std::to_string(i) + "].quadratic").c_str(), 1.8);
+        //quadShader->setFloat(("lights[" + std::to_string(i) + "].linear").c_str(), 0.7);
+        //quadShader->setFloat(("lights[" + std::to_string(i) + "].quadratic").c_str(), 1.8);
     }
 
     glActiveTexture(GL_TEXTURE0);
@@ -786,12 +801,14 @@ void renderDeferredScene(Scene* scene) {
     
     // copy depth buffer to default framebuffer's depth buffer
     glBindFramebuffer(GL_READ_FRAMEBUFFER, scene->getGBuffer());
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // write to default framebuffer
+    //glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // write to default framebuffer
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, scene->FBOs["hdr"]); // write to hdr
     // blit to default framebuffer. Note that this may or may not work as the internal formats of both the FBO and default framebuffer have to match.
     // the internal formats are implementation defined. This works on all of my systems, but if it doesn't on yours you'll likely have to write to the
     // depth buffer in another shader stage (or somehow see to match the default framebuffer's internal format with the FBO's internal format).
     glBlitFramebuffer(0, 0, scene->screenWidth, scene->screenHeight, 0, 0, scene->screenWidth, scene->screenHeight, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    //glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    //glBindFramebuffer(GL_FRAMEBUFFER, scene->FBOs["hdr"]);
     
     // render lights
     Shader* lightShader = scene->shaders["lights"];
@@ -808,7 +825,56 @@ void renderDeferredScene(Scene* scene) {
         lightShader->setVec3("lightColor", scene->lights[i]->lightColor);
         scene->models["sphere"]->draw(lightShader);
     }
+    checkGLErrors();
+    checkFramebufferStatus();
     
+//    //skybox
+//    glDepthFunc(GL_LEQUAL);
+//    Shader* skyShader = scene->shaders["skybox"];
+//    skyShader->use();
+//    skyShader->setMat4("view", view);
+//    skyShader->setMat4("projection", projection);
+//    glActiveTexture(GL_TEXTURE0);
+//    glBindTexture(GL_TEXTURE_CUBE_MAP, scene->textures["skybox"]);
+//    scene->primitives["skybox"]->draw();
+//    glDepthFunc(GL_LESS);
+    
+    // third pass for blurring
+    unsigned int pingpongFBO[2], pingpongBuffer[2];
+    pingpongFBO[0] = scene->FBOs["pingpong0"];
+    pingpongFBO[1] = scene->FBOs["pingpong1"];
+    pingpongBuffer[0] = scene->textures["pingpong0"];
+    pingpongBuffer[1] = scene->textures["pingpong1"];
+    
+    Shader* blurShader = scene->shaders["blur"];
+    blurShader->use();
+    blurShader->setInt("image", 0);
+    
+    bool horizontal = true, first_iter = true;
+    int amount = 10;
+    for (unsigned int i = 0; i < amount; ++i) {
+        glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[horizontal]);
+        blurShader->setInt("horizontal", horizontal);
+        glBindTexture(GL_TEXTURE_2D, first_iter ? scene->textures["hdr_bright"] : pingpongBuffer[!horizontal]);
+        scene->primitives["quad"]->draw();
+        horizontal = !horizontal;
+        if (first_iter) {
+            first_iter = false;
+        }
+    }
+    
+    // draw full-screen quad
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    quadShader = scene->shaders["bloom"];
+    quadShader->use();
+    quadShader->setInt("texture_color", 0);
+    quadShader->setInt("texture_bright", 1);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, scene->textures["hdr_color"]);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, pingpongBuffer[!horizontal]);
+    scene->primitives["quad"]->draw();
 }
 
 #endif /* world_h */

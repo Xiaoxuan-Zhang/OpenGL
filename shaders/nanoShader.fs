@@ -1,4 +1,5 @@
 #version 330 core
+#define GAMMA 2.2
 
 struct Material {
   sampler2D texture_diffuse1;
@@ -38,6 +39,13 @@ void main()
     float reflect_intensity = texture(material.texture_reflection1, fs_in.TexCoords).r;
     vec3 reflect_color;
     reflect_color = reflCol * reflect_intensity;
+    vec3 color = diffuse + reflect_color;
+    
+    // tone mapping
+    // reinhard tone mapping
+    vec3 rst = color / (color + vec3(1.0));
+    // gamma correction
+    rst = pow(rst, vec3(1.0 / GAMMA));
 
-    FragColor = vec4(diffuse + reflect_color, 1.0);
+    FragColor = vec4(rst, 1.0);
 }
