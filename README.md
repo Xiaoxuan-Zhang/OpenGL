@@ -9,3 +9,6 @@ A Xcode project for the purpose of learning from: https://learnopengl.com/Introd
 
 * Simple Shadows
 ![Shadows example](https://github.com/Xiaoxuan-Zhang/OpenGL/blob/master/results/shadows.png?raw=true)
+
+* Environment Map + Reflection 
+![Environment map + reflection](https://github.com/Xiaoxuan-Zhang/OpenGL/blob/master/results/reflection.png?raw=true)
