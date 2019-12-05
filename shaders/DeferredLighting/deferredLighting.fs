@@ -25,16 +25,16 @@ void main() {
     float specular = texture(texture_gAlbedoSpec, TexCoords).a;
     
     vec3 viewDir = normalize(cameraPos - fragPos);
-    vec3 color = albedo * 0.02;
-    float linear = 0.8;
-    float quadratic = 1.8;
+    vec3 color = albedo * 0.3;
+    float linear = 0.5;
+    float quadratic = 1.5;
     for (int i = 0; i < LIGHT_NUM; ++i) {
         vec3 lightDir = normalize(lights[i].lightPos);
         vec3 lightCol = lights[i].lightColor;
         vec3 halfWayDir = normalize(lightDir + viewDir);
 
         vec3 diffCol = max(dot(normal, lightDir), 0.0) * albedo * lightCol;
-        vec3 specCol = pow(max(dot(normal, halfWayDir), 0.0), 32.0) * lightCol * specular;
+        vec3 specCol = pow(max(dot(normal, halfWayDir), 0.0), 16.0) * lightCol * specular;
 
         float dist = length(lights[i].lightPos - fragPos);
         float att = 1.0 / (1.0 + linear * dist + quadratic * dist * dist);
@@ -44,10 +44,10 @@ void main() {
     FragColor = vec4(color, 1.0);
     BrightColor = vec4(1.0);
     //brightness
-    vec3 threshold = vec3(0.1126, 0.3152, 0.0722);
+    vec3 threshold = vec3(0.9126, 0.7152, 0.8722);
     float brightness = dot(color, threshold);
     if (brightness > 1.0) {
-        BrightColor = vec4(color, 1.0);
+        BrightColor = FragColor;
     } else {
         BrightColor = vec4(0.0, 0.0, 0.0, 1.0);
     }

@@ -668,7 +668,7 @@ Scene* deferredScene(int screenWidth, int screenHeight, Camera *camera) {
     newScene->shaders["GBuffer_normal"] = new Shader("shaders/DeferredLighting/GBuffer_normal.vs", "shaders/DeferredLighting/GBuffer.fs");
     newScene->shaders["lighting"] = new Shader("shaders/DeferredLighting/deferredLighting.vs", "shaders/DeferredLighting/deferredLighting.fs");
     newScene->shaders["lights"] = new Shader("shaders/DeferredLighting/lights.vs", "shaders/DeferredLighting/lights.fs");
-    newScene->shaders["skybox"] = new Shader("shaders/skybox.vs", "shaders/skybox.fs");
+    newScene->shaders["skybox"] = new Shader("shaders/DeferredLighting/skybox.vs", "shaders/DeferredLighting/skybox.fs");
     newScene->shaders["blur"] = new Shader("shaders/DeferredLighting/Bloom_final.vs", "shaders/DeferredLighting/Bloom_blur.fs");
     newScene->shaders["bloom"] = new Shader("shaders/DeferredLighting/Bloom_final.vs", "shaders/DeferredLighting/Bloom_final.fs");
     
@@ -698,12 +698,13 @@ Scene* deferredScene(int screenWidth, int screenHeight, Camera *camera) {
         float x = randomFloat();
         float y = randomFloat();
         float z = randomFloat();
-        newScene->addLight(POINT_LIGHT, glm::vec3(x * 15.0, y * 3.0, z * 15.0 - 5.0), glm::vec3(2.5 + randomFloat() * 2.5, 2.5 + randomFloat() * 2.5, 2.5 + randomFloat() * 2.5));
+        newScene->addLight(POINT_LIGHT, glm::vec3(x * 15.0, y * 3.0, z * 15.0 - 5.0), glm::vec3(10.0f, 10.0f, 8.0f));
     }
     
     // add HDR color buffer and brightness buffer
     newScene->addTexture("hdr_color", addNullTexture(screenWidth, screenHeight, GL_RGB16F, GL_RGB, GL_FLOAT));
     newScene->addTexture("hdr_bright", addNullTexture(screenWidth, screenHeight, GL_RGB16F, GL_RGB, GL_FLOAT));
+    newScene->addTexture("depthmap", addNullDepthTexture(screenWidth, screenHeight));
     
     unsigned int bufferAttachments[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
     unsigned int hdrFBO;
@@ -712,10 +713,18 @@ Scene* deferredScene(int screenWidth, int screenHeight, Camera *camera) {
     newScene->FBOs["hdr"] = hdrFBO;
     glBindTexture(GL_TEXTURE_2D, newScene->textures["hdr_color"]);
     glFramebufferTexture2D(GL_FRAMEBUFFER, bufferAttachments[0], GL_TEXTURE_2D, newScene->textures["hdr_color"], 0);
-    
     glBindTexture(GL_TEXTURE_2D, newScene->textures["hdr_bright"]);
     glFramebufferTexture2D(GL_FRAMEBUFFER, bufferAttachments[1], GL_TEXTURE_2D, newScene->textures["hdr_bright"], 0);
+    //glBindTexture(GL_TEXTURE_2D, newScene->textures["depthmap"]);
+    //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, newScene->textures["depthmap"], 0);
     glDrawBuffers(2, bufferAttachments);
+    // create and attach depth buffer (renderbuffer)
+    unsigned int rboDepth;
+    glGenRenderbuffers(1, &rboDepth);
+    glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, screenWidth, screenHeight);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
+    
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     
     // add G buffer for deferred lighting
@@ -796,19 +805,14 @@ void renderDeferredScene(Scene* scene) {
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, scene->textures["G_albedo_specular"]);
     scene->primitives["quad"]->draw();
-    checkGLErrors();
-    checkFramebufferStatus();
     
     // copy depth buffer to default framebuffer's depth buffer
     glBindFramebuffer(GL_READ_FRAMEBUFFER, scene->getGBuffer());
-    //glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // write to default framebuffer
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, scene->FBOs["hdr"]); // write to hdr
     // blit to default framebuffer. Note that this may or may not work as the internal formats of both the FBO and default framebuffer have to match.
     // the internal formats are implementation defined. This works on all of my systems, but if it doesn't on yours you'll likely have to write to the
     // depth buffer in another shader stage (or somehow see to match the default framebuffer's internal format with the FBO's internal format).
     glBlitFramebuffer(0, 0, scene->screenWidth, scene->screenHeight, 0, 0, scene->screenWidth, scene->screenHeight, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-    //glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    //glBindFramebuffer(GL_FRAMEBUFFER, scene->FBOs["hdr"]);
     
     // render lights
     Shader* lightShader = scene->shaders["lights"];
@@ -828,16 +832,16 @@ void renderDeferredScene(Scene* scene) {
     checkGLErrors();
     checkFramebufferStatus();
     
-//    //skybox
-//    glDepthFunc(GL_LEQUAL);
-//    Shader* skyShader = scene->shaders["skybox"];
-//    skyShader->use();
-//    skyShader->setMat4("view", view);
-//    skyShader->setMat4("projection", projection);
-//    glActiveTexture(GL_TEXTURE0);
-//    glBindTexture(GL_TEXTURE_CUBE_MAP, scene->textures["skybox"]);
-//    scene->primitives["skybox"]->draw();
-//    glDepthFunc(GL_LESS);
+    //skybox
+    glDepthFunc(GL_LEQUAL);
+    Shader* skyShader = scene->shaders["skybox"];
+    skyShader->use();
+    skyShader->setMat4("view", view);
+    skyShader->setMat4("projection", projection);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, scene->textures["skybox"]);
+    scene->primitives["skybox"]->draw();
+    glDepthFunc(GL_LESS);
     
     // third pass for blurring
     unsigned int pingpongFBO[2], pingpongBuffer[2];
@@ -863,18 +867,24 @@ void renderDeferredScene(Scene* scene) {
         }
     }
     
-    // draw full-screen quad
+    // draw full-screen quad for post processing
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     quadShader = scene->shaders["bloom"];
     quadShader->use();
     quadShader->setInt("texture_color", 0);
     quadShader->setInt("texture_bright", 1);
+    quadShader->setInt("depthmap", 2);
+    quadShader->setFloat("nearPlane", nearPlane);
+    quadShader->setFloat("farPlane", farPlane);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, scene->textures["hdr_color"]);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, pingpongBuffer[!horizontal]);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, scene->textures["depthmap"]);
     scene->primitives["quad"]->draw();
+    
 }
 
 #endif /* world_h */

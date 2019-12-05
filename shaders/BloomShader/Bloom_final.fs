@@ -4,6 +4,7 @@ in vec2 TexCoords;
 
 uniform sampler2D scene;
 uniform sampler2D bloomBlur;
+
 uniform bool bloom;
 uniform float exposure;
 

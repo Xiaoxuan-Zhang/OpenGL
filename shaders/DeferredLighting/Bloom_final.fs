@@ -8,11 +8,22 @@ in vec2 TexCoords;
 
 uniform sampler2D texture_color;
 uniform sampler2D texture_bright;
+uniform sampler2D depthmap;
+uniform float nearPlane;
+uniform float farPlane;
+
+float LinearizeDepth(float depth)
+{
+    float z = depth * 2.0 - 1.0; // Back to NDC
+    return (2.0 * nearPlane * farPlane) / (farPlane + nearPlane - z * (farPlane - nearPlane));
+}
 
 void main()
 {
     vec3 color = texture(texture_color, TexCoords).rgb;
     vec3 bright = texture(texture_bright, TexCoords).rgb;
+    float depth = texture(depthmap, TexCoords).r;
+    depth = LinearizeDepth(depth);
     color += bright;
     
     // tone mapping
@@ -20,5 +31,5 @@ void main()
     
     // gamma correction
     rst = pow(rst, vec3(1.0 / GAMMA));
-    FragColor = vec4(rst, 1.0);
+    FragColor = vec4(color, 1.0);
 }
