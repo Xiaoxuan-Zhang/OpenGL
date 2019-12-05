@@ -12,3 +12,6 @@ A Xcode project for the purpose of learning from: https://learnopengl.com/Introd
 
 * Environment Map + Reflection 
 ![Environment map + reflection](https://github.com/Xiaoxuan-Zhang/OpenGL/blob/master/results/reflection.png?raw=true)
+
+* Deferred shading + bloom
+![Deferred shading + bloom](https://github.com/Xiaoxuan-Zhang/OpenGL/blob/master/results/deferredShadingBloom.png?raw=true)
